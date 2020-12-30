@@ -52,7 +52,7 @@ class User(db.Model):
 
 
 class Workspace(db.Model):
-    __tablename__ = "worspace"
+    __tablename__ = "workspace"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
@@ -74,11 +74,18 @@ class Workspace(db.Model):
             "name": self.name,
             "url": self.url,
             "users": [u.serialize_name() for u in self.users],
-            "channels": self.__serialize_public_channels()
+            "channels": self.serialize_public_channels()
         }
     
-    def __serialize_public_channels(self):
-        return [c.serialize() for c in self.channels if c.public]
+    def serialize_name(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "url": self.url
+        }
+    
+    def serialize_public_channels(self):
+        return [c.serialize_name() for c in self.channels if c.public]
 
 class Channel(db.Model):
     __tablename__ = "channel"
@@ -87,8 +94,8 @@ class Channel(db.Model):
     name = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
     public = db.Column(db.Boolean, nullable=False)
-    workspace_id = db.Column(db.Integer, db.ForeignKey("Workspace.id"), nullable=False)
-    workspace = db.relationship("Workspace")
+    workspace_id = db.Column(db.Integer, db.ForeignKey("workspace.id"), nullable=False)
+    workspace = db.relationship("Workspace", back_populates="channels")
     users = db.relationship(
         "User",
         secondary=association_table_userchannel
@@ -105,6 +112,13 @@ class Channel(db.Model):
             "id": self.id,
             "name": self.name,
             "description": self.description,
-            "workspace_id": self.workspace_id,
+            "workspace": self.workspace.serialize_name(),
+            "users": [u.serialize_name() for u in self.users]
+        }
+    
+    def serialize_name(self):
+        return {
+            "id": self.id,
+            "name": self.name,
             "users": [u.serialize_name() for u in self.users]
         }
