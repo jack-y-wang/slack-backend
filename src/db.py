@@ -16,12 +16,12 @@ association_table_userchannel = db.Table(
     db.Column('channel_id', db.Integer, db.ForeignKey('channel.id'))
 )
 
-# association_table_userthread = db.Table(
-#     "association_table_userthread",
-#     db.Model.metadata,
-#     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
-#     db.Column('message_id', db.Integer, db.ForeignKey('message.id'))
-# )
+association_table_userthread = db.Table(
+    "association_table_userthread",
+    db.Model.metadata,
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('message_id', db.Integer, db.ForeignKey('message.id'))
+)
 
 class User(db.Model):
     __tablename__ = "user"
@@ -35,10 +35,11 @@ class User(db.Model):
         secondary=association_table_userworksp,
         back_populates="users"
     )
-    # threads = db.relationship(
-    #     "Message",
-    #     back_populates="users_following"
-    # )
+    threads = db.relationship(
+        "Message",
+        secondary=association_table_userthread,
+        back_populates="users_following"
+    )
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
@@ -146,7 +147,7 @@ class Message(db.Model):
     channel_id = db.Column(db.Integer, db.ForeignKey("channel.id"), nullable=False)
     channel = db.relationship("Channel", back_populates="messages")
     threads = db.relationship("Thread", back_populates='message', cascade='delete')
-    # users_following = db.relationship("User", back_populates='threads')
+    users_following = db.relationship("User", secondary=association_table_userthread, back_populates='threads')
     updated = db.Column(db.Boolean, nullable=False)
 
     def __init__(self, **kwargs):
@@ -164,7 +165,7 @@ class Message(db.Model):
             "timestamp": str(self.timestamp),
             "channel": self.channel.serialize_name(),
             "threads": [t.serialize_content() for t in self.threads],
-            # "users_following": self.users_following.serialize_name(),
+            "users_following": [u.serialize_name() for u in self.users_following],
             "updated": self.updated
         }
     

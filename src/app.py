@@ -209,6 +209,7 @@ def create_message(channel_id):
     )
 
     optional_channel.messages.append(message)
+    sender.threads.append(message)
     db.session.commit()
     return success_response(message.serialize())
 
@@ -287,7 +288,7 @@ def create_thread(msg_id):
     )
     db.session.add(thread)
     optional_message.threads.append(thread)
-    # optional_message.users_following.append(sender)
+    optional_message.users_following.append(sender)
     db.session.commit()
     return success_response(thread.serialize())
     
