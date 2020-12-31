@@ -74,6 +74,15 @@ def get_users_following_thread(msg_id):
         return failure_response("Message not found")
     return success_response(dao.get_users_of_message(optional_msg))
 
+@app.route("/users/<int:user_id>/", methods=["DELETE"])
+def remove_user(user_id):
+    optional_user = dao.get_user_by_id(user_id)
+    if not optional_user:
+        return failure_response("User not found")
+    db.session.delete(optional_user)
+    db.session.commit()
+    return success_response(optional_user.serialize())
+
 # ------------------------- WORKSPACE ROUTES --------------------------------------------
 @app.route("/workspaces/", methods=["POST"])
 def create_workspace():
@@ -121,6 +130,15 @@ def add_user_to_workspace(workspace_id):
     db.session.commit()
     return success_response(workspace.serialize())
 
+@app.route("/workspaces/<int:workspace_id>/", methods=["DELETE"])
+def remove_workspace(workspace_id):
+    workspace = dao.get_workspace_by_id(workspace_id)
+    if workspace is None:
+        return failure_response("Workspace not found")
+    db.session.delete(workspace)
+    db.session.commit()
+    return success_response(workspace.serialize())
+
 
 # ------------------------- CHANNEL ROUTES --------------------------------------------
 @app.route("/workspaces/<int:workspace_id>/channels/", methods=["POST"])
@@ -140,7 +158,11 @@ def create_channel(workspace_id):
     
     channel = Channel(name=name, description=description, public=public, workspace_id=workspace_id)
     db.session.add(channel)
-    # workspace.channels.append(channel)
+    if channel.public == True:
+        for user in workspace.users:
+            # channel.users.append(user)
+            user.channels.append(channel)
+    workspace.channels.append(channel)
     db.session.commit()
     return success_response(channel.serialize())
 
@@ -151,7 +173,7 @@ def get_channel(channel_id):
         return failure_response("Channel not found")
     return success_response(optional_channel.serialize())
 
-@app.route("/channels/<int:channel_id>/add-user/", methods=["POST"])
+@app.route("/channels/<int:channel_id>/users/", methods=["POST"])
 def add_user_to_channel(channel_id):
     optional_channel = dao.get_channel_by_id(channel_id)
     if optional_channel is None:
@@ -170,7 +192,26 @@ def add_user_to_channel(channel_id):
     optional_channel.users.append(user)
     db.session.commit()
     return success_response(optional_channel.serialize())
+
+@app.route("/channels/<int:channel_id>/users/<int:user_id>/", methods=["DELETE"])
+def remove_user_from_channel(channel_id, user_id):
+    optional_channel = dao.get_channel_by_id(channel_id)
+    if optional_channel is None:
+        return failure_response("Channel not found")
+    optional_user = dao.get_user_by_id(user_id)
+    if optional_user is None:
+        return failure_response("User not found")
     
+    optional_channel.users.remove(optional_user)
+    db.session.commit()
+    return optional_channel.serialize()
+
+@app.route("/users/<int:user_id>/channels/")
+def get_channels_of_user(user_id):
+    optional_user = dao.get_user_by_id(user_id)
+    if optional_user is None:
+        return failure_response("User not found")
+    return success_response(optional_user.serialize_channels())
 
 @app.route("/workspaces/<int:worksp_id>/channels/")
 def get_channels_of_workspace(worksp_id):
@@ -179,6 +220,15 @@ def get_channels_of_workspace(worksp_id):
         return failure_response("Workspace not found")
     channels = dao.get_workspaces_channels(worksp_id)
     return success_response(channels)
+
+@app.route("/channels/<int:channel_id>/", methods=["DELETE"])
+def remove_channel(channel_id):
+    optional_channel = dao.get_channel_by_id(channel_id)
+    if optional_channel is None:
+        return failure_response("Channel not found")
+    db.session.delete(optional_channel)
+    db.session.commit()
+    return success_response(optional_channel.serialize())
 
 
 # ------------------------- MESSAGE ROUTES --------------------------------------------
@@ -255,7 +305,7 @@ def delete_message(msg_id):
     optional_message = dao.get_message_by_id(msg_id)
     if optional_message is None:
         return failure_response("Message not found")
-    
+   
     db.session.delete(optional_message)
     db.session.commit()
     return success_response(optional_message.serialize_content())
@@ -319,6 +369,18 @@ def update_thread(thread_id):
     db.session.commit()
     return success_response(optional_thread.serialize())
 
+@app.route("/threads/<int:thread_id>/", methods=["DELETE"])
+def remove_thread(thread_id):
+    optional_thread = dao.get_thread_by_id(thread_id)
+    if optional_thread is None:
+        return failure_response("Thread not found")
+    message, user_id = optional_thread.message, optional_thread.sender_id
+    user = dao.get_user_by_id(user_id)
+
+    message.users_following.remove(user)
+    db.session.delete(optional_thread)
+    db.session.commit()
+    return success_response(optional_thread.serialize())
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

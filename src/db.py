@@ -23,6 +23,13 @@ association_table_userthread = db.Table(
     db.Column('message_id', db.Integer, db.ForeignKey('message.id'))
 )
 
+association_table_userdm = db.Table(
+    "association_table_userdm",
+    db.Model.metadata,
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('dm_group_id', db.Integer, db.ForeignKey('dm_group.id'))
+)
+
 class User(db.Model):
     __tablename__ = "user"
 
@@ -33,6 +40,11 @@ class User(db.Model):
     workspaces = db.relationship(
         "Workspace", 
         secondary=association_table_userworksp,
+        back_populates="users"
+    )
+    channels = db.relationship(
+        "Channel",
+        secondary=association_table_userchannel,
         back_populates="users"
     )
     threads = db.relationship(
@@ -62,6 +74,8 @@ class User(db.Model):
             "username": self.username
         }
 
+    def serialize_channels(self):
+        return [c.serialize() for c in self.channels]
 
 class Workspace(db.Model):
     __tablename__ = "workspace"
@@ -69,7 +83,7 @@ class Workspace(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     url = db.Column(db.String, nullable=False)
-    channels = db.relationship("Channel", cascade="delete", back_populates="workspace")
+    channels = db.relationship("Channel", cascade="delete")
     users = db.relationship(
         "User", 
         secondary=association_table_userworksp,
@@ -107,12 +121,12 @@ class Channel(db.Model):
     description = db.Column(db.String)
     public = db.Column(db.Boolean, nullable=False)
     workspace_id = db.Column(db.Integer, db.ForeignKey("workspace.id"), nullable=False)
-    workspace = db.relationship("Workspace", back_populates="channels")
     users = db.relationship(
         "User",
-        secondary=association_table_userchannel
+        secondary=association_table_userchannel,
+        back_populates='channels'
     )
-    messages = db.relationship("Message", back_populates="channel")
+    messages = db.relationship("Message", back_populates="channel", cascade='delete')
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
@@ -121,11 +135,14 @@ class Channel(db.Model):
         self.workspace_id = kwargs.get("workspace_id")
     
     def serialize(self):
+        workspace = Workspace.query.filter_by(id=self.workspace_id).first()
+        if workspace is None:
+            return None
         return {
             "id": self.id,
             "name": self.name,
             "description": self.description,
-            "workspace": self.workspace.serialize_name(),
+            "workspace": workspace.serialize_name(),
             "users": [u.serialize_name() for u in self.users],
             "messages": [m.serialize_content() for m in self.messages] 
         }
@@ -147,7 +164,11 @@ class Message(db.Model):
     channel_id = db.Column(db.Integer, db.ForeignKey("channel.id"), nullable=False)
     channel = db.relationship("Channel", back_populates="messages")
     threads = db.relationship("Thread", back_populates='message', cascade='delete')
-    users_following = db.relationship("User", secondary=association_table_userthread, back_populates='threads')
+    users_following = db.relationship(
+        "User", 
+        secondary=association_table_userthread, 
+        back_populates='threads',
+        cascade='delete')
     updated = db.Column(db.Boolean, nullable=False)
 
     def __init__(self, **kwargs):
