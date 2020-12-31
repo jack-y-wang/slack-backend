@@ -1,8 +1,9 @@
 import json
 import os
+import datetime
 
 from db import db
-from db import User, Workspace, Channel
+from db import User, Workspace, Channel, Message, Thread
 
 from flask import Flask
 from flask import request
@@ -61,11 +62,17 @@ def create_user():
 
 @app.route("/users/<int:user_id>/workspaces/")
 def get_users_workspaces(user_id):
-    user_exists = dao.get_user_by_id(user_id)
-    if not user_exists:
+    optional_user = dao.get_user_by_id(user_id)
+    if not optional_user:
         return failure_response("User not found")
     return success_response(dao.get_workspaces_of_user(user_id))
 
+@app.route("/messages/<int:msg_id>/users/")
+def get_users_following_thread(msg_id):
+    optional_msg = dao.get_message_by_id(msg_id)
+    if not optional_msg:
+        return failure_response("Message not found")
+    return success_response(dao.get_users_of_message(optional_msg))
 
 # ------------------------- WORKSPACE ROUTES --------------------------------------------
 @app.route("/workspaces/", methods=["POST"])
@@ -116,7 +123,6 @@ def add_user_to_workspace(workspace_id):
 
 
 # ------------------------- CHANNEL ROUTES --------------------------------------------
-
 @app.route("/workspaces/<int:workspace_id>/channels/", methods=["POST"])
 def create_channel(workspace_id):
     workspace = dao.get_workspace_by_id(workspace_id)
@@ -173,6 +179,145 @@ def get_channels_of_workspace(worksp_id):
         return failure_response("Workspace not found")
     channels = dao.get_workspaces_channels(worksp_id)
     return success_response(channels)
+
+
+# ------------------------- MESSAGE ROUTES --------------------------------------------
+@app.route("/channels/<int:channel_id>/messages/", methods=["POST"])
+def create_message(channel_id):
+    optional_channel = dao.get_channel_by_id(channel_id)
+    if optional_channel is None:
+        return failure_response("Channel not found")
+    
+    body = json.loads(request.data)
+    sender_id = body.get("sender_id")
+    content = body.get("content")
+    if sender_id is None or content is None:
+        return failure_response("Empty sender_id or content")
+
+    sender = dao.get_user_by_id(sender_id)
+    if sender is None:
+        return failure_response("Sender is not found")
+    if not sender in optional_channel.users:
+        return failure_response("Sender is not in channel")
+
+    timestamp = datetime.datetime.now()
+    message = Message(
+        sender_id = sender_id,
+        content = content,
+        timestamp = timestamp,
+        channel_id = channel_id
+    )
+
+    optional_channel.messages.append(message)
+    db.session.commit()
+    return success_response(message.serialize())
+
+@app.route("/messages/<int:msg_id>/")
+def get_message(msg_id):
+    optional_message = dao.get_message_by_id(msg_id)
+    if optional_message is None:
+        return failure_response("Message not found")
+    return success_response(optional_message.serialize())
+
+@app.route("/messages/<int:msg_id>/", methods=["POST"])
+def update_message(msg_id):
+    optional_message = dao.get_message_by_id(msg_id)
+    if optional_message is None:
+        return failure_response("Message not found")
+    
+    body = json.loads(request.data)
+    content = body.get("content")
+    if content is None:
+        return failure_response("Invalid content input")
+    
+    optional_message.content = body.get("content", optional_message.content)
+    optional_message.updated = True
+    db.session.commit()
+    return success_response(optional_message.serialize())
+
+@app.route("/channels/<int:channel_id>/messages/")
+def get_messages_of_channel(channel_id):
+    optional_channel = dao.get_channel_by_id(channel_id)
+    if optional_channel is None:
+        return failure_response("Channel not found")
+    return success_response(dao.get_messages_of_channel(channel_id))
+
+@app.route("/users/<int:user_id>/threads/")
+def get_followed_threads_of_user(user_id):
+    optional_user = dao.get_user_by_id(user_id)
+    if optional_user is None:
+        return failure_response("User not found")
+    return success_response(dao.get_threads_of_user(optional_user))
+
+@app.route("/messages/<int:msg_id>/", methods=["DELETE"])
+def delete_message(msg_id):
+    optional_message = dao.get_message_by_id(msg_id)
+    if optional_message is None:
+        return failure_response("Message not found")
+    
+    db.session.delete(optional_message)
+    db.session.commit()
+    return success_response(optional_message.serialize_content())
+
+# ------------------------- THREAD ROUTES --------------------------------------------
+@app.route("/messages/<int:msg_id>/threads/", methods=["POST"])
+def create_thread(msg_id):
+    optional_message = dao.get_message_by_id(msg_id)
+    if optional_message is None:
+        return failure_response("Message not found")
+    
+    body = json.loads(request.data)
+    sender_id = body.get("sender_id")
+    content = body.get("content")
+    if sender_id is None or content is None:
+        return failure_response("Empty sender_id or content")
+    
+    sender = dao.get_user_by_id(sender_id)
+    if sender is None:
+        return failure_response("User not found")
+    if not sender in optional_message.channel.users:
+        return failure_response("User is not in the channel")
+    
+    timestamp = datetime.datetime.now()
+    thread = Thread(
+        sender_id=sender_id,
+        content=content,
+        timestamp=timestamp,
+        message_id=msg_id
+    )
+    db.session.add(thread)
+    optional_message.threads.append(thread)
+    # optional_message.users_following.append(sender)
+    db.session.commit()
+    return success_response(thread.serialize())
+    
+@app.route("/threads/<int:thread_id>/")
+def get_thread(thread_id):
+    optional_thread = dao.get_thread_by_id(thread_id)
+    if optional_thread is None:
+        return failure_response("Thread not found")
+    return success_response(optional_thread.serialize())
+
+@app.route("/messages/<int:msg_id>/threads/")
+def get_threads_of_message(msg_id):
+    optional_message = dao.get_message_by_id(msg_id)
+    if optional_message is None:
+        return failure_response("Message not found")
+    return success_response(dao.get_threads_of_message(optional_message))
+
+@app.route("/threads/<int:thread_id>/", methods=["POST"])
+def update_thread(thread_id):
+    optional_thread = dao.get_thread_by_id(thread_id)
+    if optional_thread is None:
+        return failure_response("Thread not found")
+    
+    body = json.loads(request.data)
+    optional_thread.content = body.get("content", optional_thread.content)
+    optional_thread.updated = True
+
+    db.session.commit()
+    return success_response(optional_thread.serialize())
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

@@ -1,4 +1,4 @@
-from db import User, Workspace, Channel
+from db import User, Workspace, Channel, Message, Thread
 
 # --------------------- USER ----------------------------
 def get_user_by_id(id):
@@ -24,6 +24,9 @@ def get_workspaces_of_user(user_id):
     if user is None:
         return None
     return [w.serialize() for w in user.workspaces]
+
+def get_threads_of_user(user):
+    return [m.serialize_content() for m in user.threads]
 
 def does_user_already_exist(email, username):
     optional_user = get_user_by_email(email)
@@ -84,3 +87,29 @@ def get_channel_by_name(workspace, channel_name):
     if not channel:
         return None
     return channel[0]
+
+# --------------------- MESSAGE ----------------------------
+def get_messages_of_channel(channel_id):
+    optional_channel = Channel.query.filter_by(id=channel_id).first()
+    if optional_channel is None:
+        return None
+    return [m.serialize_content() for m in optional_channel.messages] 
+
+def get_message_by_id(msg_id):
+    optional_message = Message.query.filter_by(id=msg_id).first()
+    if optional_message:
+        return optional_message
+    return None
+
+def get_users_of_message(msg):
+    return [u.serialize() for u in msg.users]
+
+# --------------------- THREAD ----------------------------
+def get_thread_by_id(thread_id):
+    optional_thread = Thread.query.filter_by(id=thread_id).first()
+    if optional_thread:
+        return optional_thread
+    return None
+
+def get_threads_of_message(msg):
+    return [t.serialize() for t in msg.threads]

@@ -16,6 +16,13 @@ association_table_userchannel = db.Table(
     db.Column('channel_id', db.Integer, db.ForeignKey('channel.id'))
 )
 
+# association_table_userthread = db.Table(
+#     "association_table_userthread",
+#     db.Model.metadata,
+#     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+#     db.Column('message_id', db.Integer, db.ForeignKey('message.id'))
+# )
+
 class User(db.Model):
     __tablename__ = "user"
 
@@ -28,6 +35,10 @@ class User(db.Model):
         secondary=association_table_userworksp,
         back_populates="users"
     )
+    # threads = db.relationship(
+    #     "Message",
+    #     back_populates="users_following"
+    # )
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
@@ -100,6 +111,7 @@ class Channel(db.Model):
         "User",
         secondary=association_table_userchannel
     )
+    messages = db.relationship("Message", back_populates="channel")
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
@@ -113,7 +125,8 @@ class Channel(db.Model):
             "name": self.name,
             "description": self.description,
             "workspace": self.workspace.serialize_name(),
-            "users": [u.serialize_name() for u in self.users]
+            "users": [u.serialize_name() for u in self.users],
+            "messages": [m.serialize_content() for m in self.messages] 
         }
     
     def serialize_name(self):
@@ -121,4 +134,82 @@ class Channel(db.Model):
             "id": self.id,
             "name": self.name,
             "users": [u.serialize_name() for u in self.users]
+        }
+
+class Message(db.Model):
+    __tablename__ = "message"
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    content = db.Column(db.String, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey("channel.id"), nullable=False)
+    channel = db.relationship("Channel", back_populates="messages")
+    threads = db.relationship("Thread", back_populates='message', cascade='delete')
+    # users_following = db.relationship("User", back_populates='threads')
+    updated = db.Column(db.Boolean, nullable=False)
+
+    def __init__(self, **kwargs):
+        self.sender_id = kwargs.get("sender_id")
+        self.content = kwargs.get("content")
+        self.timestamp = kwargs.get("timestamp")
+        self.channel_id = kwargs.get("channel_id")
+        self.updated = False
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "sender_id": self.sender_id,
+            "content": self.content,
+            "timestamp": str(self.timestamp),
+            "channel": self.channel.serialize_name(),
+            "threads": [t.serialize_content() for t in self.threads],
+            # "users_following": self.users_following.serialize_name(),
+            "updated": self.updated
+        }
+    
+    def serialize_content(self):
+        return {
+            "id": self.id,
+            "sender_id": self.sender_id,
+            "content": self.content,
+            "timestamp": str(self.timestamp),
+            "updated": self.updated
+        }
+
+class Thread(db.Model):
+    __tablename__ = "thread"
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    content = db.Column(db.String, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    message_id = db.Column(db.Integer, db.ForeignKey("message.id"), nullable=False)
+    message = db.relationship("Message", back_populates="threads")
+    updated = db.Column(db.Boolean, nullable=False)
+
+    def __init__(self, **kwargs):
+        self.sender_id = kwargs.get("sender_id")
+        self.content = kwargs.get("content")
+        self.timestamp = kwargs.get("timestamp")
+        self.message_id = kwargs.get("message_id")
+        self.updated = False
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "sender_id": self.sender_id,
+            "content": self.content,
+            "timestamp": str(self.timestamp),
+            "message": self.message.serialize_content(),
+            "updated": self.updated
+        }
+    
+    def serialize_content(self):
+        return {
+            "id": self.id,
+            "sender_id": self.sender_id,
+            "content": self.content,
+            "timestamp": str(self.timestamp),
+            "updated": self.updated
         }
