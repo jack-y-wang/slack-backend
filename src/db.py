@@ -52,6 +52,11 @@ class User(db.Model):
         secondary=association_table_userthread,
         back_populates="users_following"
     )
+    dms = db.relationship(
+        "DM_group",
+        secondary=association_table_userdm,
+        back_populates="users"
+    )
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
@@ -64,7 +69,7 @@ class User(db.Model):
             "name": self.name,
             "email": self.email,
             "username": self.username,
-            "workspaces": [w.serialize() for w in self.workspaces]
+            "workspaces": [w.serialize_name() for w in self.workspaces]
         }
     
     def serialize_name(self):
@@ -75,7 +80,7 @@ class User(db.Model):
         }
 
     def serialize_channels(self):
-        return [c.serialize() for c in self.channels]
+        return [c.serialize_for_user() for c in self.channels]
 
 class Workspace(db.Model):
     __tablename__ = "workspace"
@@ -151,7 +156,17 @@ class Channel(db.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "users": [u.serialize_name() for u in self.users]
+            "description": self.description
+        }
+    def serialize_for_user(self):
+        workspace = Workspace.query.filter_by(id=self.workspace_id).first()
+        if workspace is None:
+            return None
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "workspace": workspace.serialize_name(),
         }
 
 class Message(db.Model):
@@ -198,7 +213,7 @@ class Message(db.Model):
             "timestamp": str(self.timestamp),
             "updated": self.updated
         }
-
+    
 class Thread(db.Model):
     __tablename__ = "thread"
 
@@ -235,3 +250,77 @@ class Thread(db.Model):
             "timestamp": str(self.timestamp),
             "updated": self.updated
         }
+
+class DM_group(db.Model):
+    __tablename__ = "dm_group"
+
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey("workspace.id"), nullable=False)
+    users = db.relationship("User", secondary=association_table_userdm, back_populates="dms")
+    messages = db.relationship("DM_message", cascade="delete")
+
+    def __init__(self, **kwargs):
+        self.workspace_id = kwargs.get("workspace_id")
+    
+    def serialize(self):
+        workspace = Workspace.query.filter_by(id=self.workspace_id).first()
+        if workspace is None:
+            return None
+        return {
+            "id": self.id,
+            "worskpace": workspace.serialize_name(),
+            "users": [u.serialize_name() for u in self.users],
+            "messages": [m.serialize_dm() for m in self.messages]
+        }
+    
+    def serialize_dm_group(self):
+        workspace = Workspace.query.filter_by(id=self.workspace_id).first()
+        if workspace is None:
+            return None
+        return {
+            "id": self.id,
+            "worskpace": workspace.serialize_name(),
+            "users": [u.serialize_name() for u in self.users],
+        }
+
+class DM_message(db.Model):
+    __tablename__ = "dm_message"
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    content = db.Column(db.String, nullable = False)
+    timestamp = db.Column(db.DateTime, nullable = False)
+    dm_group_id = db.Column(db.Integer, db.ForeignKey("dm_group.id"), nullable=False)
+
+    def __init__(self, **kwargs):
+        self.sender_id = kwargs.get("sender_id")
+        self.content = kwargs.get("content")
+        self.timestamp = kwargs.get("timestamp")
+        self.dm_group_id = kwargs.get("dm_group_id")
+    
+    def serialize(self):
+        sender = User.query.filter_by(id=self.sender_id).first()
+        if sender is None:
+            return None
+        dm_group = DM_group.query.filter_by(id=self.dm_group_id).first()
+        if dm_group is None:
+            return None
+        return {
+            "id": self.id,
+            "sender": sender.serialize_name(),
+            "content": self.content,
+            "timestamep": str(self.timestamp),
+            "dm_group": self.dm_group.serialize_dm_group()
+        }
+    
+    def serialize_dm(self):
+        sender = User.query.filter_by(id=self.sender_id).first()
+        if sender is None:
+            return None
+        return {
+            "id": self.id,
+            "sender": sender.serialize_name(),
+            "content": self.content,
+            "timestamep": str(self.timestamp),
+        }
+
