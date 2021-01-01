@@ -25,6 +25,19 @@ def get_workspaces_of_user(user_id):
         return None
     return [w.serialize() for w in user.workspaces]
 
+def get_users_channels_of_workspace(user_id, workspace_id):
+    optional_user = get_user_by_id(user_id)
+    if optional_user is None:
+        return False, "User not found"
+    optional_workspace = get_workspace_by_id(workspace_id)
+    if optional_workspace is None:
+        return False, "Workspace not found"
+    if optional_workspace not in optional_user.workspaces:
+        return False, "User is not in Workspace"
+    
+    channels = filter(lambda c : c.workspace_id == workspace_id, optional_user.channels)
+    return [c.serialize_name() for c in channels], ""
+
 def get_threads_of_user(user):
     return [m.serialize_content() for m in user.threads]
 
@@ -88,12 +101,14 @@ def get_channel_by_name(workspace, channel_name):
         return None
     return channel[0]
 
-# --------------------- MESSAGE ----------------------------
 def get_messages_of_channel(channel_id):
     optional_channel = Channel.query.filter_by(id=channel_id).first()
     if optional_channel is None:
         return None
     return [m.serialize_content() for m in optional_channel.messages] 
+
+# --------------------- MESSAGE ----------------------------
+
 
 def get_message_by_id(msg_id):
     optional_message = Message.query.filter_by(id=msg_id).first()
@@ -104,12 +119,12 @@ def get_message_by_id(msg_id):
 def get_users_of_message(msg):
     return [u.serialize() for u in msg.users]
 
+def get_threads_of_message(msg):
+    return [t.serialize_content() for t in msg.threads]
+
 # --------------------- THREAD ----------------------------
 def get_thread_by_id(thread_id):
     optional_thread = Thread.query.filter_by(id=thread_id).first()
     if optional_thread:
         return optional_thread
     return None
-
-def get_threads_of_message(msg):
-    return [t.serialize() for t in msg.threads]
