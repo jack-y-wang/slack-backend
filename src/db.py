@@ -182,8 +182,7 @@ class Message(db.Model):
     users_following = db.relationship(
         "User", 
         secondary=association_table_userthread, 
-        back_populates='threads',
-        cascade='delete')
+        back_populates='threads')
     updated = db.Column(db.Boolean, nullable=False)
 
     def __init__(self, **kwargs):
