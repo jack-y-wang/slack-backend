@@ -3,12 +3,10 @@ import os
 import datetime
 
 from db import db
-from db import User, Workspace, Channel, Message, Thread
+import dao
 
 from flask import Flask
 from flask import request
-
-import dao
 
 app = Flask(__name__)
 db_filename = "slack.db"
@@ -81,6 +79,13 @@ def get_dms_of_user_in_workspace(user_id, workspace_id):
         return failure_response(err)
     return success_response([dm.serialize() for dm in dms])
 
+@app.route("/users/<int:user_id>/images/")
+def get_images_of_user(user_id):
+    images, err = dao.get_images_of_user(user_id)
+    if images is None:
+        return failure_response(err)
+    return success_response([i.serialize() for i in images])
+
 @app.route("/users/<int:user_id>/", methods=["DELETE"])
 def remove_user(user_id):
     optional_user, err = dao.delete_user_by_id(user_id)
@@ -136,6 +141,13 @@ def get_channels_of_workspace(workspace_id):
         return failure_response(err)
     return success_response([c.serialize() for c in channels])
 
+@app.route("/workspaces/<int:workspace_id>/images/")
+def get_images_of_workspace(workspace_id):
+    images, err = dao.get_images_of_workspace(workspace_id)
+    if images is None:
+        return failure_response(err)
+    return success_response([i.serialize() for i in images])
+
 
 # ------------------------- CHANNEL ROUTES --------------------------------------------
 @app.route("/workspaces/<int:workspace_id>/channels/", methods=["POST"])
@@ -188,14 +200,23 @@ def get_messages_of_channel(channel_id):
         return failure_response(err)
     return success_response([m.serialize_content() for m in optional_messages])
 
+@app.route("/channels/<int:channel_id>/images/")
+def get_images_of_channel(channel_id):
+    channel, err = dao.get_channel_by_id(channel_id)
+    if err:
+        return failure_response(err)
+    images = channel.images
+    return success_response([i.serialize() for i in images])
+
 # ------------------------- MESSAGE ROUTES --------------------------------------------
 @app.route("/channels/<int:channel_id>/messages/", methods=["POST"])
 def create_message(channel_id):
     body = json.loads(request.data)
     user_id = body.get("user_id")
     content = body.get("content")
+    image = body.get("image")
     
-    optional_message, err = dao.create_message(channel_id, user_id, content)
+    optional_message, err = dao.create_message(channel_id, user_id, content, image)
     if optional_message is None:
         return failure_response(err)
     return success_response(optional_message.serialize(), 201)
@@ -245,8 +266,9 @@ def create_thread(message_id):
     body = json.loads(request.data)
     user_id = body.get("user_id")
     content = body.get("content")
+    image = body.get("image")
 
-    optional_thread, err = dao.create_thread(message_id, user_id, content)
+    optional_thread, err = dao.create_thread(message_id, user_id, content, image)
     if optional_thread is None:
         return failure_response(err)
     return success_response(optional_thread.serialize(), 201)
@@ -319,8 +341,9 @@ def create_dm_message(dm_id):
     body = json.loads(request.data)
     sender_id = body.get("user_id")
     content = body.get("content")
+    image = body.get("image")
 
-    optional_dm_message, err = dao.create_dm_message(dm_id, sender_id, content)
+    optional_dm_message, err = dao.create_dm_message(dm_id, sender_id, content, image)
     if optional_dm_message is None:
         return failure_response(err)
     
@@ -350,6 +373,21 @@ def delete_dm_message(message_id):
     if optional_dm_message is None:
         return failure_response(err)
     return success_response(optional_dm_message.serialize())
+
+# ------------------------- DM ROUTES --------------------------------------------
+@app.route("/images/<int:image_id>/")
+def get_image(image_id):
+    optional_image, err = dao.get_image_by_id(image_id)
+    if err:
+        return failure_response(err)
+    return success_response(optional_image.serialize())
+
+@app.route("/images/<int:image_id>/", methods=["DELETE"])
+def remove_image(image_id):
+    optional_image, err = dao.delete_image_by_id(image_id)
+    if err:
+        return failure_response(err)
+    return success_response(optional_image.serialize())
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

@@ -1,4 +1,4 @@
-from db import db, User, Workspace, Channel, Message, Thread, DM_group, DM_message
+from db import db, User, Workspace, Channel, Message, Thread, DM_group, DM_message, Asset
 
 import datetime
 
@@ -68,6 +68,12 @@ def get_dms_of_user(user_id, workspace_id):
     if optional_workspace not in optional_user.workspaces:
         return False, "User is not in Workspace"
     return optional_user.dms, ""
+
+def get_images_of_user(user_id):
+    optional_user, err = get_user_by_id(user_id)
+    if optional_user is None:
+        return None, err
+    return optional_user.images, ""
 
 def does_user_exist(email, username):
     optional_user, err = get_user_by_email(email)
@@ -154,8 +160,13 @@ def get_channels_of_workspace(workspace_id):
     optional_workspace, err = get_workspace_by_id(workspace_id)
     if optional_workspace is None:
         return None, err
-    optional_workspace = Workspace.query.filter_by(id=workspace_id).first()
     return optional_workspace.channels, ""
+
+def get_images_of_workspace(workspace_id):
+    optional_workspace, err = get_workspace_by_id(workspace_id)
+    if optional_workspace is None:
+        return None, err
+    return optional_workspace.images, ""
 
 def delete_workspace_by_id(workspace_id):
     optional_workspace, err = get_workspace_by_id(workspace_id)
@@ -205,15 +216,15 @@ def get_messages_of_channel(channel_id):
 def add_user_to_channel(channel_id, user_id):
     optional_channel, err = get_channel_by_id(channel_id)
     if optional_channel is None:
-        return err
+        return None, err
     user, err = get_user_by_id(user_id)
     if user is None:
-        return err
+        return None, err
     workspace, _ = get_workspace_by_id(optional_channel.workspace_id)
     if not user in workspace.users:
-        return f"User is not in workspace: {workspace.serialize_name()}"
+        return None, f"User is not in workspace: {workspace.serialize_name()}"
     if user in optional_channel.users:
-        return f"User already in channel {optional_channel.name}"
+        return None, f"User already in channel {optional_channel.name}"
     
     optional_channel.users.append(user)
     db.session.commit()
@@ -241,7 +252,7 @@ def delete_channel(channel_id):
 
 
 # --------------------- MESSAGE ----------------------------
-def create_message(channel_id, sender_id, content):
+def create_message(channel_id, sender_id, content, image_data):
     optional_channel, err = get_channel_by_id(channel_id)
     if optional_channel is None:
         return None, err
@@ -263,6 +274,25 @@ def create_message(channel_id, sender_id, content):
 
     optional_channel.messages.append(message)
     sender.threads.append(message)
+
+    if image_data is not None:
+        workspace, _ = get_workspace_by_id(optional_channel.workspace_id)
+        image, err = create_image(
+            image_data=image_data,
+            sender_id=sender_id, 
+            source="message", 
+            source_id=message.id,
+            channel_id=optional_channel.id,
+            workspace_id=workspace.id)
+        if image is None:
+            return None, err
+        print(f"Hi Jack here is the image id: {image.id}")
+        sender.images.append(image)
+        optional_channel.images.append(image)
+        workspace.images.append(image)
+
+        message.image_id = image.id
+
     db.session.commit()
     return message, ""
     
@@ -309,7 +339,7 @@ def delete_message_by_id(message_id):
     return optional_message, ""
 
 # --------------------- THREAD ----------------------------
-def create_thread(message_id, sender_id, content):
+def create_thread(message_id, sender_id, content, image_data):
     optional_message, err = get_message_by_id(message_id)
     if optional_message is None:
         return None, err
@@ -326,12 +356,31 @@ def create_thread(message_id, sender_id, content):
     thread = Thread(
         sender_id=sender_id,
         content=content,
+        image=image,
         timestamp=timestamp,
         message_id=message_id
     )
     db.session.add(thread)
     optional_message.threads.append(thread)
     optional_message.users_following.append(user)
+
+    if image_data is not None:
+        workspace = get_workspace_by_id(optional_message.channel.workspace_id)
+        image, err = create_image(
+            image_data=image_data,
+            sender_id=sender_id, 
+            source="thread", 
+            source_id=thread.id,
+            channel_id=optional_message.channel_id,
+            workspace_id=workspace.id)
+        if err:
+            return None, err
+        sender.images.apppend(image)
+        optional_message.channel.images.append(image)
+        workspace.images.append(image)
+
+        thread.image_id = image.id
+
     db.session.commit()
     return thread, ""
 
@@ -474,3 +523,48 @@ def delete_dm_message_by_id(message_id):
     db.session.delete(optional_dm_message)
     db.session.commit()
     return optional_dm_message, ""
+
+# --------------------- IMAGES ----------------------------
+def create_image(**kwargs):
+    image_data = kwargs.get("image_data")
+    source = kwargs.get("source")
+    source_id = kwargs.get("source_id")
+    channel_id = kwargs.get("channel_id")
+    workspace_id = kwargs.get("workspace_id")
+    sender_id = kwargs.get("sender_id")
+
+    if image_data is None:
+        return None, "No base64 URL is found"
+    
+    image = Asset(
+        image_data=image_data, 
+        sender_id=sender_id, 
+        source=source, 
+        source_id=source_id,
+        channel_id=channel_id,
+        workspace_id=workspace_id
+    )
+    db.session.add(image)
+    return image, ""
+
+def get_image_by_id(image_id):
+    image = Asset.query.filter_by(id=image_id).first()
+    if image is None:
+        return None, "Image not found"
+    return image, ""
+
+def delete_image_by_id(image_id):
+    optional_image, err = get_image_by_id(image_id)
+    if err:
+        return None, "image not found"
+    
+    db.session.delete(optional_image)
+    if optional_image.source == "message":
+        message = Message.query.filter_by(id=optional_image.source_id).first()
+        message.image_id = None
+    else:
+        thread = Thread.query.filter_by(id=optional_image.source_id).first()
+        thread.image_id = None
+    
+    db.session.commit()
+    return optional_image, ""

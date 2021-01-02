@@ -1,6 +1,24 @@
 from flask_sqlalchemy import SQLAlchemy
 
+import base64
+import boto3
+import datetime
+from io import BytesIO
+from mimetypes import guess_extension, guess_type
+import os
+from PIL import Image
+import random
+import re
+import string
+
 db = SQLAlchemy()
+
+EXTENSIONS = ["png", "gif", "jpg", "jpeg"]
+
+BASE_DIR = os.getcwd()
+
+S3_BUCKET = "slack-backend-images"
+S3_BASE_URL = f"https://{S3_BUCKET}.s3-us-west-1.amazonaws.com"
 
 association_table_userworksp = db.Table(
     "association_table_userworksp",
@@ -57,6 +75,7 @@ class User(db.Model):
         secondary=association_table_userdm,
         back_populates="users"
     )
+    images = db.relationship("Asset", cascade="delete")
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
@@ -94,6 +113,7 @@ class Workspace(db.Model):
         secondary=association_table_userworksp,
         back_populates="workspaces"
     )
+    images = db.relationship("Asset", cascade="delete")
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
@@ -132,6 +152,7 @@ class Channel(db.Model):
         back_populates='channels'
     )
     messages = db.relationship("Message", back_populates="channel", cascade='delete')
+    images = db.relationship("Asset", cascade="delete")
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
@@ -175,6 +196,7 @@ class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     content = db.Column(db.String, nullable=False)
+    image_id = db.Column(db.Integer, db.ForeignKey("asset.id"), nullable=True)
     timestamp = db.Column(db.DateTime, nullable=False)
     channel_id = db.Column(db.Integer, db.ForeignKey("channel.id"), nullable=False)
     channel = db.relationship("Channel", back_populates="messages")
@@ -193,10 +215,16 @@ class Message(db.Model):
         self.updated = False
     
     def serialize(self):
+        image = Asset.query.filter_by(id=self.image_id).first()
+        if image is None:
+            image_serialized = None
+        else:
+            image_serialized = image.serialize_for_message()
         return {
             "id": self.id,
             "sender_id": self.sender_id,
             "content": self.content,
+            "image": image_serialized,
             "timestamp": str(self.timestamp),
             "channel": self.channel.serialize_name(),
             "threads": [t.serialize_content() for t in self.threads],
@@ -205,9 +233,15 @@ class Message(db.Model):
         }
     
     def serialize_content(self):
+        image = Asset.query.filter_by(id=self.image_id).first()
+        if image is None:
+            image_serialized = None
+        else:
+            image_serialized = image.serialize_for_message()
         return {
             "id": self.id,
             "sender_id": self.sender_id,
+            "image": image_serialized,
             "content": self.content,
             "timestamp": str(self.timestamp),
             "updated": self.updated
@@ -222,6 +256,7 @@ class Thread(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False)
     message_id = db.Column(db.Integer, db.ForeignKey("message.id"), nullable=False)
     message = db.relationship("Message", back_populates="threads")
+    image_id = db.Column(db.Integer, db.ForeignKey("asset.id"), nullable=True)
     updated = db.Column(db.Boolean, nullable=False)
 
     def __init__(self, **kwargs):
@@ -232,20 +267,32 @@ class Thread(db.Model):
         self.updated = False
     
     def serialize(self):
+        image = Asset.query.filter_by(id=self.image_id).first()
+        if image is None:
+            image_serialized = None
+        else:
+            image_serialized = image.serialize_for_message()
         return {
             "id": self.id,
             "sender_id": self.sender_id,
             "content": self.content,
+            "image": image_serialized,
             "timestamp": str(self.timestamp),
             "message": self.message.serialize_content(),
             "updated": self.updated
         }
     
     def serialize_content(self):
+        image = Asset.query.filter_by(id=self.image_id).first()
+        if image is None:
+            image_serialized = None
+        else:
+            image_serialized = image.serialize_for_message()
         return {
             "id": self.id,
             "sender_id": self.sender_id,
             "content": self.content,
+            "image": image_serialized,
             "timestamp": str(self.timestamp),
             "updated": self.updated
         }
@@ -326,3 +373,102 @@ class DM_message(db.Model):
             "timestamep": str(self.timestamp),
             "updated": self.updated
         }
+
+class Asset(db.Model):
+    __tablename__ = "asset"
+
+    id = db.Column(db.Integer, primary_key=True)
+    base_url = db.Column(db.String, nullable=True)
+    salt = db.Column(db.String, nullable=False)
+    extension = db.Column(db.String, nullable=False)
+    width = db.Column(db.Integer, nullable=False)
+    height = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False)
+
+    sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    source = db.Column(db.String, nullable=False) # Message or Thread
+    source_id = db.Column(db.String, nullable=False)
+    workspace_id = db.Column(db.Integer, db.ForeignKey("workspace.id"), nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey("channel.id"), nullable=False)
+
+    def __init__(self, **kwargs):
+        self.create(kwargs.get("image_data"))
+        self.sender_id = kwargs.get("sender_id")
+        self.source = kwargs.get("source")
+        self.source_id = kwargs.get("source_id")
+        self.channel_id = kwargs.get("channel_id")
+        self.workspace_id = kwargs.get("workspace_id")
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "url": f"{self.base_url}/{self.salt}.{self.extension}",
+            "sender_id": self.sender_id,
+            "created_at": str(self.created_at),
+            "width": self.width,
+            "height": self.height,
+            "source": self.source,
+            "source_id": self.source_id,
+        }
+    
+    def serialize_for_message(self):
+        return {
+            "id": self.id,
+            "url": f"{self.base_url}/{self.salt}.{self.extension}",
+            "sender_id": self.sender_id,
+            "created_at": str(self.created_at),
+            "width": self.width,
+            "height": self.height
+        }
+
+    def create(self, image_data):
+        try:
+            # base64 string --> .png --> png
+            ext = guess_extension(guess_type(image_data)[0])[1:]
+            if ext not in EXTENSIONS:
+                raise Exception(f"Extension {ext} not supported")
+
+            # secure way of generating random string for image name
+            salt = "".join(
+                random.SystemRandom().choice(
+                    string.ascii_uppercase + string.digits
+                )
+                for _ in range(16)
+            )
+
+            # remove header of base64 string and open image
+            img_str = re.sub("data:image/.+;base64", "", image_data)
+            img_data = base64.b64decode(img_str)
+            img = Image.open(BytesIO(img_data))
+
+            self.base_url = S3_BASE_URL
+            self.salt = salt
+            self.extension = ext
+            self.width = img.width
+            self.height = img.height
+            self.created_at = datetime.datetime.now()
+
+            img_filename = f"{salt}.{ext}"
+            self.upload(img, img_filename)
+        except Exception as e:
+            print(f"Unable to create image due to {e}")
+
+    def upload(self, img, img_filename):
+        try:
+            img_temploc = f"{BASE_DIR}/{img_filename}"
+            img.save(img_temploc)
+
+            # upload image to S3
+            s3_client = boto3.client("s3")
+            s3_client.upload_file(img_temploc, S3_BUCKET, img_filename)
+
+            # make S3 image url public
+            s3_resource = boto3.resource("s3")
+            object_acl = s3_resource.ObjectAcl(S3_BUCKET, img_filename)
+            object_acl.put(ACL="public-read")
+
+            os.remove(img_temploc)
+
+        except Exception as e:
+            print(f"Unable to upload image due to {e}")
+
