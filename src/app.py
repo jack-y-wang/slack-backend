@@ -74,6 +74,13 @@ def get_followed_threads_of_user(user_id):
         return failure_response(err)
     return success_response([m.serialize_content() for m in threads])
 
+@app.route("/users/<int:user_id>/workspaces/<int:workspace_id>/dms/")
+def get_dms_of_user_in_workspace(user_id, workspace_id):
+    dms, err = dao.get_dms_of_user(user_id, workspace_id)
+    if dms is None:
+        return failure_response(err)
+    return success_response([dm.serialize() for dm in dms])
+
 @app.route("/users/<int:user_id>/", methods=["DELETE"])
 def remove_user(user_id):
     optional_user, err = dao.delete_user_by_id(user_id)
@@ -269,16 +276,80 @@ def remove_thread(thread_id):
         return failure_response(err)
     return success_response(optional_thread.serialize())
 
-# ------------------------- DM GROUP ROUTES --------------------------------------------
-# @app.route("/workspaces/<int:workspace_id>/users/<int:user_id>/dms/", methods=["POST"])
-# def create_dm_group(workspace_id, user_id):
-#     workspace = dao.get_workspace_by_id(workspace_id)
-#     if workspace is None:
-#         return failure_response("Workspace not found")
-#     optional_user = dao.get_user_by_id(user_id)
-#     if not optional_user:
-#         return failure_response("User not found")   
+# ------------------------- DM ROUTES --------------------------------------------
+@app.route("/workspaces/<int:workspace_id>/dms/", methods=["POST"])
+def create_dm_group(workspace_id):
+    body = json.loads(request.data)
+    users = body.get("users")
+    optional_dm_group, err = dao.create_dm_group(workspace_id, users)
+    if optional_dm_group is None:
+        return failure_response(err)
+    return success_response(optional_dm_group.serialize())
 
+@app.route("/dms/<int:dm_id>/")
+def get_dm_group(dm_id):
+    optional_dm_group, err = dao.get_dm_group_by_id(dm_id)
+    if optional_dm_group is None:
+        return failure_response(err)
+    return success_response(optional_dm_group.serialize())
+
+@app.route("/dms/<int:dm_id>/", methods=["DELETE"])
+def delete_dm_group(dm_id):
+    optional_dm_group, err = dao.delete_dm_group_by_id(dm_id)
+    if optional_dm_group is None:
+        return failure_response(err)
+    return success_response(optional_dm_group.serialize())
+
+@app.route("/dms/<int:dm_id>/users/")
+def get_users_of_dm_group(dm_id):
+    optional_users, err = dao.get_users_of_dm_group(dm_id)
+    if optional_users is None:
+        return failure_response(None)
+    return success_response([u.serialize_name() for u in optional_users])
+
+@app.route("/dms/<int:dm_id>/messages/")
+def get_messages_of_dm_group(dm_id):
+    optional_messages, err = dao.get_messages_of_dm_group(dm_id)
+    if optional_messages is None:
+        return failure_response(None)
+    return success_response([m.serialize_dm() for m in optional_messages])
+
+@app.route("/dms/<int:dm_id>/messages/", methods=["POST"])
+def create_dm_message(dm_id):
+    body = json.loads(request.data)
+    sender_id = body.get("user_id")
+    content = body.get("content")
+
+    optional_dm_message, err = dao.create_dm_message(dm_id, sender_id, content)
+    if optional_dm_message is None:
+        return failure_response(err)
+    
+    return success_response(optional_dm_message.serialize())
+
+@app.route("/dm-messages/<int:message_id>/")
+def get_dm_message(message_id):
+    optional_dm_message, err = dao.get_dm_message_by_id(message_id)
+    if optional_dm_message is None:
+        return failure_response(err)
+    return success_response(optional_dm_message.serialize())
+
+@app.route("/dm-messages/<int:message_id>/", methods=["POST"])
+def update_dm_message(message_id):
+    body = json.loads(request.data)
+    sender_id = body.get("user_id")
+    content = body.get("content")
+
+    optional_dm_message, err = dao.update_dm_message(message_id, sender_id, content)
+    if optional_dm_message is None:
+        return failure_response(err)
+    return success_response(optional_dm_message.serialize())
+
+@app.route("/dm-messages/<int:message_id>/", methods=["DELETE"])
+def delete_dm_message(message_id):
+    optional_dm_message, err = dao.delete_dm_message_by_id(message_id)
+    if optional_dm_message is None:
+        return failure_response(err)
+    return success_response(optional_dm_message.serialize())
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

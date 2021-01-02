@@ -27,7 +27,7 @@ This API is modeled after Slack, which is a communication platform for organizat
         "name": "Jack Wang",
         "email": "jw123@gmail.com",
         "username": "jack.wang",
-        "workspaces": [SERIALIZED WORKSPACES OF USER, ...]
+        "workspaces": []
     }
 } 
 ```
@@ -35,12 +35,31 @@ This API is modeled after Slack, which is a communication platform for organizat
 ## Get a specific User
 **GET** `/users/{id}/`
 ##### Response
-``` yaml
+```yaml
 {
     "success": true,
-    "data": <SERIALIZED USER OBJECT>
-} 
+    "data": {
+        "id": 1,
+        "name": "Jack Wang",
+        "email": "jw123@gmail.com",
+        "username": "jack.wang",
+        "workspaces": [
+            {
+                "id": 1,
+                "name": "HKN",
+                "url": "/hkn"
+            },
+            {
+                "id": 1,
+                "name": "Computer Science Mentors",
+                "url": "/csm"
+            },
+            ...
+        ]
+    }
+}
 ```
+* data: serialized user object
 
 ## Delete User
 **DELETE** `/users/{id}/`
@@ -58,9 +77,83 @@ This API is modeled after Slack, which is a communication platform for organizat
 ``` yaml
 {
     "success": true,
-    "data": <SERIALIZED WORKSPACE OBJECT>
+    "data": [<SERIALIZED WORKSPACE OBJECT>, ...]
 } 
 ```
+
+## Get User's Channels of a Workspace
+**GET** `/users/{id}/workspaces/{id}/channels/`
+```yaml
+{
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "name": "announcements",
+            "description": "important messages"
+        },
+        {
+            "id": 3,
+            "name": "general",
+            "description": "for chats"
+        },
+        ...
+    ]
+}
+```
+
+## Get User's DMs of a Workspace
+**GET** `/users/{id}/workspaces/{id}/dms/`
+```yaml
+
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "worskpace": {
+                "id": 1,
+                "name": "HKN",
+                "url": "/hkn"
+            },
+            "users": [
+                {
+                    "id": 1,
+                    "name": "Jack Wang",
+                    "username": "jack.wang"
+                },
+                {
+                    "id": 3,
+                    "name": "Anthony P",
+                    "username": "a.p"
+                }
+            ],
+            "messages": [
+                {
+                    "id": 1,
+                    "sender": {
+                        "id": 1,
+                        "name": "Jack Wang",
+                        "username": "jack.wang"
+                    },
+                    "content": "anime is p cool",
+                    "timestamep": "2021-01-01 20:18:49.061647"
+                },
+                {
+                    "id": 2,
+                    "sender": {
+                        "id": 3,
+                        "name": "Anthony P",
+                        "username": "a.p"
+                    },
+                    "content": "yaaaa anime is p cool",
+                    "timestamep": "2021-01-01 20:39:27.176679"
+                }
+            ]
+        },
+        ...
+    ]
+}
+``
 
 ## Get User's followed Threads
 * Will get the Messages the user either sent or replied in a thread
@@ -131,23 +224,30 @@ This API is modeled after Slack, which is a communication platform for organizat
                 "name": "Jack Wang",
                 "username": "jack.wang"
             },
+            {
+                "id": 3,
+                "name": "Jerry Song",
+                "username": "jerry.s"
+            },
             ...
         ],
         "channels": [
             {
                 "id": 1,
                 "name": "announcements",
+                "description": "important messages"
             },
             {
                 "id": 2,
                 "name": "general",
+                "description": "chatting"
             }
             ...
         ]
     }
 }
 ```
-* Data: serialized workspace object
+* data: serialized workspace object
 
 ## Add a User to a Workspace
 **POST** `/workspaces/{id}/add-user/`
@@ -164,6 +264,7 @@ This API is modeled after Slack, which is a communication platform for organizat
     "data": <SERIALIZED WORKSPACE OBJECT>
 }
 ```
+* **User** is automatically added to all public channels in the Workspace
 
 ## Delete a Workspace
 **DELETE** `/workspaces/{id}/`
@@ -271,6 +372,7 @@ This API is modeled after Slack, which is a communication platform for organizat
     }
 }
 ```
+* data: serialized channel object
 * **messages** will be empty when initializing a channel
 
 ## Get a Channel
@@ -382,6 +484,7 @@ This API is modeled after Slack, which is a communication platform for organizat
     }
 }
 ```
+* data: serialized message object
 * **users_following** will be users who either created the message or replied in a thread
 * **threads** will be empty when intially creating a message
 
@@ -446,7 +549,7 @@ This API is modeled after Slack, which is a communication platform for organizat
 
 ## Get the threads (replies) of a Message
 **GET** `/messages/{id}/threads/`
-##### Request
+##### Response
 ```yaml
 {
     "success": true,
@@ -476,7 +579,7 @@ This API is modeled after Slack, which is a communication platform for organizat
 ```yaml
 {
     "user_id": 2,
-    "content": "test thread"
+    "content": "hiiiii"
 }
 ```
 ##### Response
@@ -499,9 +602,11 @@ This API is modeled after Slack, which is a communication platform for organizat
     }
 }
 ```
+* data: serialized thread object
 
 ## Get a Thread Response
 **GET** `/threads/{id}/`
+##### Response
 ``` yaml
 {
     "success": true,
@@ -510,7 +615,8 @@ This API is modeled after Slack, which is a communication platform for organizat
 ```
 
 ## Update a Thread Response
-**UPDATE** `/threads/{id}/`
+**POST** `/threads/{id}/`
+##### Response
 ``` yaml
 {
     "success": true,
@@ -520,9 +626,240 @@ This API is modeled after Slack, which is a communication platform for organizat
 
 ## Delete a Thread Response
 **DELETE** `/threads/{id}/`
+##### Response
 ``` yaml
 {
     "success": true,
     "data": <SERIALIZED THREAD OBJECT>
+}
+```
+
+# DMs
+
+## Create a DM group
+**POST** `/workspaces/{id}/dms/' 
+##### Request
+``` yaml
+{
+    "users": [
+        {
+            "user_id": <USER ID>
+        },
+        ...
+    ]
+}
+```
+##### Responase
+```yaml
+{
+    "success": true,
+    "data": {
+        "id": 3,
+        "worskpace": {
+            "id": 1,
+            "name": "Computer Science Mentors",
+            "url": "/csm"
+        },
+        "users": [
+            {
+                "id": 1,
+                "name": "Jack Wang",
+                "username": "jack.wang"
+            },
+            {
+                "id": 8,
+                "name": "Cesar",
+                "username": "cesar.pz"
+            },
+            ...
+        ],
+        "messages": []
+    }
+}
+```
+* **messages** is empty when creating a DM group
+
+## Get a DM group
+**GET** `/dms/{id]/`
+##### Response
+```yaml
+{
+    "success": true,
+    "data": {
+        "id": 3,
+        "worskpace": {
+            "id": 1,
+            "name": "Computer Science Mentors",
+            "url": "/csm"
+        },
+        "users": [
+            {
+                "id": 1,
+                "name": "Jack Wang",
+                "username": "jack.wang"
+            },
+            {
+                "id": 8,
+                "name": "Cesar",
+                "username": "cesar.pz"
+            },
+            ...
+        ],
+        "messages": [
+            {
+                "id": 1,
+                "sender_id": 3,
+                "content": "Whats up all",
+                "timestamp": "2020-12-31 11:13:21.463828",
+                "updated": false
+            },
+            {
+                "id": 3,
+                "sender_id": 8,
+                "content": "hey :wave:",
+                "timestamp": "2020-12-31 11:15:51.463828",
+                "updated": false
+            },
+            ...
+        ]
+    }
+}
+```
+* data: serialized DM group object
+
+## Delete a DM group
+**DELETE** `/dms/{id}/`
+##### Response
+``` yaml
+{
+    "success": true,
+    "data": <SERIALIZED DM GROUP OBJECT>
+}
+```
+
+## Get users of a DM group
+**GET** `/dms/{id}/users/`
+##### Response
+``` yaml
+{
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "name": "Jack Wang",
+            "username": "jack.wang"
+        },
+        {
+            "id": 8,
+            "name": "Cesar",
+            "username": "cesar.pz"
+        },
+        ...
+    ]
+} 
+```
+
+## Get messages of a DM group
+**GET** `/dms/{id}/messages/`
+##### Response
+```yaml
+{
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "sender_id": 3,
+            "content": "Whats up all",
+            "timestamp": "2020-12-31 11:13:21.463828",
+            "updated": false
+        },
+        {
+            "id": 3,
+            "sender_id": 8,
+            "content": "hey :wave:",
+            "timestamp": "2020-12-31 11:15:51.463828",
+            "updated": false
+        },
+        ...
+    ]
+}
+```
+
+## Create a DM message
+**POST** `/dms/{id}/messages/`
+##### Request
+```yaml
+{
+    "user_id": 1,
+    "content": "anime is p cool"
+}
+```
+##### Response
+```yaml
+{
+    "success": true,
+    "data": {
+        "id": 8,
+        "sender": {
+            "id": 1,
+            "name": "Jack Wang",
+            "username": "jack.wang"
+        },
+        "content": "anime is p cool",
+        "timestamp": "2021-01-01 15:42:21.658703",
+        "updated": false,
+        "dm_group": {
+            "id": 3,
+            "worskpace": {
+                "id": 1,
+                "name": "Computer Science Mentors",
+                "url": "/csm"
+            },
+            "users": [
+                {
+                    "id": 1,
+                    "name": "Jack Wang",
+                    "username": "jack.wang"
+                },
+                {
+                    "id": 8,
+                    "name": "Cesar",
+                    "username": "cesar.pz"
+                },
+                ...
+            ]
+        } 
+    }
+}
+```
+* data: serialized DM message
+
+## Get a DM message
+**GET** '/dm-messages/{id}/`
+##### Response
+``` yaml
+{
+    "success": true,
+    "data": <SERIALIZED DM MESSAGE OBJECT>
+}
+```
+
+## Update a DM message
+**POST** '/dm-messages/{id}/`
+##### Response
+``` yaml
+{
+    "success": true,
+    "data": <SERIALIZED DM MESSAGE OBJECT>
+}
+```
+
+## Delete a DM message
+**DELETE** '/dm-messages/{id}/`
+##### Response
+``` yaml
+{
+    "success": true,
+    "data": <SERIALIZED DM MESSAGE OBJECT>
 }
 ```

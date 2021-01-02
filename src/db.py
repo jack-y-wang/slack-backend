@@ -290,12 +290,14 @@ class DM_message(db.Model):
     content = db.Column(db.String, nullable = False)
     timestamp = db.Column(db.DateTime, nullable = False)
     dm_group_id = db.Column(db.Integer, db.ForeignKey("dm_group.id"), nullable=False)
+    updated = db.Column(db.Boolean, nullable = False)
 
     def __init__(self, **kwargs):
         self.sender_id = kwargs.get("sender_id")
         self.content = kwargs.get("content")
         self.timestamp = kwargs.get("timestamp")
         self.dm_group_id = kwargs.get("dm_group_id")
+        self.udpated = False
     
     def serialize(self):
         sender = User.query.filter_by(id=self.sender_id).first()
@@ -309,7 +311,8 @@ class DM_message(db.Model):
             "sender": sender.serialize_name(),
             "content": self.content,
             "timestamep": str(self.timestamp),
-            "dm_group": self.dm_group.serialize_dm_group()
+            "updated": self.updated,
+            "dm_group": dm_group.serialize_dm_group()
         }
     
     def serialize_dm(self):
@@ -321,5 +324,5 @@ class DM_message(db.Model):
             "sender": sender.serialize_name(),
             "content": self.content,
             "timestamep": str(self.timestamp),
+            "updated": self.updated
         }
-

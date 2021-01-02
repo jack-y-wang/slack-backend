@@ -1,4 +1,4 @@
-from db import db, User, Workspace, Channel, Message, Thread
+from db import db, User, Workspace, Channel, Message, Thread, DM_group, DM_message
 
 import datetime
 
@@ -57,6 +57,17 @@ def get_threads_of_user(user_id):
     if optional_user is None:
         return None, err
     return optional_user.threads, ""
+
+def get_dms_of_user(user_id, workspace_id):
+    optional_user, err = get_user_by_id(user_id)
+    if optional_user is None:
+        return None, err
+    optional_workspace, err = get_workspace_by_id(workspace_id)
+    if optional_workspace is None:
+        return False, err
+    if optional_workspace not in optional_user.workspaces:
+        return False, "User is not in Workspace"
+    return optional_user.dms, ""
 
 def does_user_exist(email, username):
     optional_user, err = get_user_by_email(email)
@@ -270,7 +281,8 @@ def update_message(msg_id, sender_id, content):
     if optional_message.sender_id != sender_id:
         return None, "Invalid user ID - must be the creator of message"
 
-    optional_message.content = content if not content is None else optional_message.content
+    if content:
+        optional_message.content = content
     optional_message.updated = True
     db.session.commit()
     return optional_message, ""
@@ -338,7 +350,8 @@ def update_thread_by_id(thread_id, sender_id, content):
     if optional_thread.sender_id != sender_id:
         return None, "Invalid user ID - must be the creator of thread reply"
     
-    optional_thread.content = content if content else optional_thread.get("content")
+    if content:
+        optional_thread.content = content
     optional_thread.updated = True
     db.session.commit()
 
@@ -359,3 +372,105 @@ def delete_thread_by_id(thread_id):
     db.session.delete(optional_thread)
     db.session.commit()
     return optional_thread, ""
+
+# --------------------- DMS - DIRECT MESSAGES ----------------------------
+def create_dm_group(workspace_id, users):
+    optional_workspace, err = get_workspace_by_id(workspace_id)
+    if optional_workspace is None:
+        return None, err
+    if len(users) > 10:
+        return None, "Can't create messaging group of more than 10 people"
+
+    dm_group = DM_group(workspace_id=workspace_id)
+    db.session.add(dm_group)
+
+    for user_json in users:
+        user_id = user_json.get("user_id")
+        user, _ = get_user_by_id(user_id)
+        if user and user in optional_workspace.users:
+            dm_group.users.append(user)
+
+    db.session.commit()
+    return dm_group, ""
+
+def get_dm_group_by_id(dm_id):
+    optional_dm_group = DM_group.query.filter_by(id=dm_id).first()
+    if optional_dm_group is None:
+        return None, "DM group not found"
+    return optional_dm_group, ""
+
+def delete_dm_group_by_id(dm_id):
+    optional_dm_group, err = get_dm_group_by_id(dm_id)
+    if optional_dm_group is None:
+        return None, err
+    
+    db.session.delete(optional_dm_group)
+    db.session.commit
+    return optional_dm_group, ""
+
+def get_users_of_dm_group(dm_id):
+    optional_dm_group, err = get_dm_group_by_id(dm_id)
+    if optional_dm_group is None:
+        return None, err
+    return optional_dm_group.users, ""
+
+def get_messages_of_dm_group(dm_id):
+    optional_dm_group, err = get_dm_group_by_id(dm_id)
+    if optional_dm_group is None:
+        return None, err
+    return optional_dm_group.messages, ""
+
+def create_dm_message(dm_id, sender_id, content):
+    optional_dm_group, err = get_dm_group_by_id(dm_id)
+    if optional_dm_group is None:
+        return None, err
+    if sender_id is None or content is None:
+        return None, "Empty user_id or content"
+    
+    user, err = get_user_by_id(sender_id)
+    if user is None:
+        return None, err
+    if not user in optional_dm_group.users:
+        return None, "User is not in DM group"
+    
+    timestamp = datetime.datetime.now()
+    dm_message = DM_message(
+        sender_id=sender_id,
+        content=content,
+        timestamp=timestamp,
+        dm_group_id=dm_id
+    )
+
+    db.session.add(dm_message)
+    db.session.commit()
+    return dm_message, ""
+
+def get_dm_message_by_id(message_id):
+    optional_message = DM_message.query.filter_by(id=message_id).first()
+    if optional_message:
+        return optional_message, ""
+    return None, "DM message not found"
+
+def update_dm_message(message_id, sender_id, content):
+    optional_dm_message, err = get_dm_message_by_id(message_id)
+    if optional_dm_message is None:
+        return None, err
+    optional_user, err = get_user_by_id(sender_id)
+    if optional_user is None:
+        return None, err
+    if optional_dm_message.sender_id != sender_id:
+        return None, "User did not create DM message"
+    
+    if not content is None:
+        optional_dm_message.content = content
+    optional_dm_messsage.updated = True
+    db.session.commit()
+    return optional_dm_message, ""
+
+def delete_dm_message_by_id(message_id):
+    optional_dm_message, err = get_dm_message_by_id(message_id)
+    if optional_dm_message is None:
+        return None, err
+    db.session.delete(optional_dm_message)
+    db.session.commit()
+    return optional_dm_message, ""
