@@ -55,6 +55,7 @@ class User(db.Model):
     name = db.Column(db.String, nullable="False")
     email = db.Column(db.String, nullable="False")
     username = db.Column(db.String, nullable="False")
+    profile_image_id = db.Column(db.Integer, db.ForeignKey("profile_image.id"), nullable=True)
     workspaces = db.relationship(
         "Workspace", 
         secondary=association_table_userworksp,
@@ -75,7 +76,7 @@ class User(db.Model):
         secondary=association_table_userdm,
         back_populates="users"
     )
-    images = db.relationship("Asset", cascade="delete")
+    images = db.relationship("MessageImage", cascade="delete")
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
@@ -83,19 +84,36 @@ class User(db.Model):
         self.username = kwargs.get("username")
     
     def serialize(self):
+        if self.profile_image_id is None:
+            profile_img = None
+        else:
+            profile_img = Asset.query.filter_by(id=self.profile_image_id).first()
+            if profile_img:
+                profile_img = profile_img.serialize()
+            
         return {
             "id": self.id,
             "name": self.name,
             "email": self.email,
             "username": self.username,
+            "profile_img": profile_img,
+            "image_id": self.profile_image_id,
             "workspaces": [w.serialize_name() for w in self.workspaces]
         }
     
     def serialize_name(self):
+        if self.profile_image_id is None:
+            profile_img = None
+        else:
+            profile_img = Asset.query.filter_by(id=self.profile_image_id).first()
+            if profile_img:
+                profile_img = profile_img.serialize()
+
         return {
             "id": self.id,
             "name": self.name,
-            "username": self.username
+            "username": self.username,
+            "profile_img": profile_img,
         }
 
     def serialize_channels(self):
@@ -113,7 +131,7 @@ class Workspace(db.Model):
         secondary=association_table_userworksp,
         back_populates="workspaces"
     )
-    images = db.relationship("Asset", cascade="delete")
+    images = db.relationship("MessageImage", cascade="delete")
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
@@ -152,7 +170,7 @@ class Channel(db.Model):
         back_populates='channels'
     )
     messages = db.relationship("Message", back_populates="channel", cascade='delete')
-    images = db.relationship("Asset", cascade="delete")
+    images = db.relationship("MessageImage", cascade="delete")
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
@@ -196,7 +214,7 @@ class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     content = db.Column(db.String, nullable=False)
-    image_id = db.Column(db.Integer, db.ForeignKey("asset.id"), nullable=True)
+    image_id = db.Column(db.Integer, db.ForeignKey("message_image.id"), nullable=True)
     timestamp = db.Column(db.DateTime, nullable=False)
     channel_id = db.Column(db.Integer, db.ForeignKey("channel.id"), nullable=False)
     channel = db.relationship("Channel", back_populates="messages")
@@ -256,7 +274,7 @@ class Thread(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False)
     message_id = db.Column(db.Integer, db.ForeignKey("message.id"), nullable=False)
     message = db.relationship("Message", back_populates="threads")
-    image_id = db.Column(db.Integer, db.ForeignKey("asset.id"), nullable=True)
+    image_id = db.Column(db.Integer, db.ForeignKey("message_image.id"), nullable=True)
     updated = db.Column(db.Boolean, nullable=False)
 
     def __init__(self, **kwargs):
@@ -378,6 +396,7 @@ class Asset(db.Model):
     __tablename__ = "asset"
 
     id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(50))
     base_url = db.Column(db.String, nullable=True)
     salt = db.Column(db.String, nullable=False)
     extension = db.Column(db.String, nullable=False)
@@ -385,40 +404,21 @@ class Asset(db.Model):
     height = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False)
 
-    sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    source = db.Column(db.String, nullable=False) # Message or Thread
-    source_id = db.Column(db.String, nullable=False)
-    workspace_id = db.Column(db.Integer, db.ForeignKey("workspace.id"), nullable=False)
-    channel_id = db.Column(db.Integer, db.ForeignKey("channel.id"), nullable=False)
+    __mapper_args__ = {
+        'polymorphic_identity':'asset',
+        'polymorphic_on': type
+    }
 
     def __init__(self, **kwargs):
         self.create(kwargs.get("image_data"))
-        self.sender_id = kwargs.get("sender_id")
-        self.source = kwargs.get("source")
-        self.source_id = kwargs.get("source_id")
-        self.channel_id = kwargs.get("channel_id")
-        self.workspace_id = kwargs.get("workspace_id")
     
     def serialize(self):
         return {
             "id": self.id,
             "url": f"{self.base_url}/{self.salt}.{self.extension}",
-            "sender_id": self.sender_id,
             "created_at": str(self.created_at),
             "width": self.width,
             "height": self.height,
-            "source": self.source,
-            "source_id": self.source_id,
-        }
-    
-    def serialize_for_message(self):
-        return {
-            "id": self.id,
-            "url": f"{self.base_url}/{self.salt}.{self.extension}",
-            "sender_id": self.sender_id,
-            "created_at": str(self.created_at),
-            "width": self.width,
-            "height": self.height
         }
 
     def create(self, image_data):
@@ -471,4 +471,69 @@ class Asset(db.Model):
 
         except Exception as e:
             print(f"Unable to upload image due to {e}")
+    
+    def delete(self):
+        try: 
+            img_filename = f"{self.salt}.{self.extension}"
+            s3_resource = boto3.resource("s3")
+            print(f"Image File Name: {self.file_name}")
+            img_obj = s3_resource.Object(S3_BUCKET, img_filename)
+            img_obj.delete()
+        except Exception as e:
+            print(f"Unable to delete image due to {e}")
 
+class MessageImage(Asset):
+    __tablename__ = 'message_image'
+    id = db.Column(db.Integer, db.ForeignKey('asset.id'), primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    source = db.Column(db.String, nullable=False) # Message or Thread
+    source_id = db.Column(db.String, nullable=False)
+    workspace_id = db.Column(db.Integer, db.ForeignKey("workspace.id"), nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey("channel.id"), nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity':'message_image',
+    }
+
+    def __init__(self, **kwargs):
+        self.create(kwargs.get("image_data"))
+        self.sender_id = kwargs.get("sender_id")
+        self.source = kwargs.get("source")
+        self.source_id = kwargs.get("source_id")
+        self.channel_id = kwargs.get("channel_id")
+        self.workspace_id = kwargs.get("workspace_id")
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "url": f"{self.base_url}/{self.salt}.{self.extension}",
+            "sender_id": self.sender_id,
+            "created_at": str(self.created_at),
+            "width": self.width,
+            "height": self.height,
+            "source": self.source,
+            "source_id": self.source_id,
+        }
+    
+    def serialize_for_message(self):
+        return {
+            "id": self.id,
+            "url": f"{self.base_url}/{self.salt}.{self.extension}",
+            "sender_id": self.sender_id,
+            "created_at": str(self.created_at),
+            "width": self.width,
+            "height": self.height
+        }
+
+class ProfileImage(Asset):
+    __tablename__ = 'profile_image'
+    id = db.Column(db.Integer, db.ForeignKey('asset.id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity':'profile_image',
+    }
+
+    def __init__(self, **kwargs):
+        self.create(kwargs.get("image_data"))
+        self.user_id = kwargs.get("user_id")

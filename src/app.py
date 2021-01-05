@@ -38,8 +38,9 @@ def create_user():
     name = body.get("name")
     email = body.get("email")
     username = body.get('username')
+    profile_img = body.get('image')
 
-    user, err = dao.create_user(name, email, username)
+    user, err = dao.create_user(name, email, username, profile_img)
     if user is None:
         return failure_response(err)
     return success_response(user.serialize())
@@ -48,6 +49,19 @@ def create_user():
 def get_user(user_id):
     user, err = dao.get_user_by_id(user_id)
     if user is None:
+        return failure_response(err)
+    return success_response(user.serialize())
+
+@app.route("/users/<int:user_id>/profile-img/", methods=["POST"])
+def update_profile_image(user_id):
+    user, err = dao.get_user_by_id(user_id)
+    if user is None:
+        return failure_response(err)
+
+    body = json.loads(request.data)
+    image_data = body.get("image")
+    image, err = dao.update_profile_image(user_id, image_data)
+    if err:
         return failure_response(err)
     return success_response(user.serialize())
 

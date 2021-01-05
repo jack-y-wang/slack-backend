@@ -15,7 +15,8 @@ This API is modeled after Slack, which is a communication platform for organizat
 {
     "name": "Jack Wang",
     "email": "jw123@gmail.com",
-    "username": "jack.wang"
+    "username": "jack.wang",
+    "image: <OPTIONAL BASE64 IMAGE>
 }
 ```
 ##### Response
@@ -27,6 +28,13 @@ This API is modeled after Slack, which is a communication platform for organizat
         "name": "Jack Wang",
         "email": "jw123@gmail.com",
         "username": "jack.wang",
+        "profile_img": null or {
+            "id": 5,
+            "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+            "created_at": "2021-01-04 22:03:56.388387",
+            "width": 88,
+            "height": 62
+        }
         "workspaces": []
     }
 } 
@@ -43,6 +51,13 @@ This API is modeled after Slack, which is a communication platform for organizat
         "name": "Jack Wang",
         "email": "jw123@gmail.com",
         "username": "jack.wang",
+        "profile_img": null or {
+            "id": 5,
+            "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+            "created_at": "2021-01-04 22:03:56.388387",
+            "width": 88,
+            "height": 62
+        }
         "workspaces": [
             {
                 "id": 1,
@@ -119,12 +134,20 @@ This API is modeled after Slack, which is a communication platform for organizat
                 {
                     "id": 1,
                     "name": "Jack Wang",
-                    "username": "jack.wang"
+                    "username": "jack.wang",
+                    "profile_img": {
+                        "id": 5,
+                        "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                        "created_at": "2021-01-04 22:03:56.388387",
+                        "width": 88,
+                        "height": 62
+                    }
                 },
                 {
                     "id": 3,
                     "name": "Anthony P",
-                    "username": "a.p"
+                    "username": "a.p",
+                    "profile_imag": null
                 }
             ],
             "messages": [
@@ -133,7 +156,14 @@ This API is modeled after Slack, which is a communication platform for organizat
                     "sender": {
                         "id": 1,
                         "name": "Jack Wang",
-                        "username": "jack.wang"
+                        "username": "jack.wang",
+                        "profile_img": {
+                            "id": 5,
+                            "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                            "created_at": "2021-01-04 22:03:56.388387",
+                            "width": 88,
+                            "height": 62
+                        }
                     },
                     "content": "anime is p cool",
                     "image": {
@@ -151,7 +181,8 @@ This API is modeled after Slack, which is a communication platform for organizat
                     "sender": {
                         "id": 3,
                         "name": "Anthony P",
-                        "username": "a.p"
+                        "username": "a.p",
+                        "profile_imag": null
                     },
                     "content": "yaaaa anime is p cool",
                     "timestamep": "2021-01-01 20:39:27.176679"
@@ -277,12 +308,20 @@ This API is modeled after Slack, which is a communication platform for organizat
             {
                 "id": 1,
                 "name": "Jack Wang",
-                "username": "jack.wang"
+                "username": "jack.wang",
+                "profile_img": {
+                    "id": 5,
+                    "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                    "created_at": "2021-01-04 22:03:56.388387",
+                    "width": 88,
+                    "height": 62
+                }
             },
             {
                 "id": 3,
                 "name": "Jerry Song",
-                "username": "jerry.s"
+                "username": "jerry.s",
+                "profile_img": null
             },
             ...
         ],
@@ -350,7 +389,14 @@ This API is modeled after Slack, which is a communication platform for organizat
                 {
                     "id": 1,
                     "name": "Jack Wang",
-                    "username": "jackwang"
+                    "username": "jackwang",
+                    "profile_img": {
+                        "id": 5,
+                        "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                        "created_at": "2021-01-04 22:03:56.388387",
+                        "width": 88,
+                        "height": 62
+                    }
                 },
                 ...
             ],
@@ -386,7 +432,14 @@ This API is modeled after Slack, which is a communication platform for organizat
                 {
                     "id": 1,
                     "name": "Jack Wang",
-                    "username": "jackwang"
+                    "username": "jackwang",
+                    "profile_img": {
+                        "id": 5,
+                        "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                        "created_at": "2021-01-04 22:03:56.388387",
+                        "width": 88,
+                        "height": 62
+                    }
                 },
                 ...
             ],
@@ -458,7 +511,14 @@ This API is modeled after Slack, which is a communication platform for organizat
             {
                 "id": 1,
                 "name": "Jack Wang",
-                "username": "jack.wang"
+                "username": "jack.wang",
+                "profile_img": {
+                    "id": 5,
+                    "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                    "created_at": "2021-01-04 22:03:56.388387",
+                    "width": 88,
+                    "height": 62
+                }
             },
             ...
         ],
@@ -611,8 +671,16 @@ This API is modeled after Slack, which is a communication platform for organizat
             {
                 "id": 1,
                 "name": "Jack Wang",
-                "username": "jackwang"
-            }
+                "username": "jackwang",
+                "profile_img": {
+                    "id": 5,
+                    "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                    "created_at": "2021-01-04 22:03:56.388387",
+                    "width": 88,
+                    "height": 62
+                }
+            },
+            ...
         ],
         "updated": false
     }
@@ -671,12 +739,20 @@ This API is modeled after Slack, which is a communication platform for organizat
         {
             "id": 1,
             "name": "Jack Wang",
-            "username": "jack.wang"
+            "username": "jack.wang",
+            "profile_img": {
+                "id": 5,
+                "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                "created_at": "2021-01-04 22:03:56.388387",
+                "width": 88,
+                "height": 62
+            }
         },
         {
             "id": 8,
             "name": "Cesar",
-            "username": "cesar.pz"
+            "username": "cesar.pz",
+            "profile_img": null
         },
         ...
     ]
@@ -819,12 +895,20 @@ This API is modeled after Slack, which is a communication platform for organizat
             {
                 "id": 1,
                 "name": "Jack Wang",
-                "username": "jack.wang"
+                "username": "jack.wang",
+                "profile_img": {
+                    "id": 5,
+                    "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                    "created_at": "2021-01-04 22:03:56.388387",
+                    "width": 88,
+                    "height": 62
+                }
             },
             {
                 "id": 8,
                 "name": "Cesar",
-                "username": "cesar.pz"
+                "username": "cesar.pz",
+                "profile_img": null
             },
             ...
         ],
@@ -851,12 +935,20 @@ This API is modeled after Slack, which is a communication platform for organizat
             {
                 "id": 1,
                 "name": "Jack Wang",
-                "username": "jack.wang"
+                "username": "jack.wang",
+                "profile_img": {
+                    "id": 5,
+                    "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                    "created_at": "2021-01-04 22:03:56.388387",
+                    "width": 88,
+                    "height": 62
+                }
             },
             {
                 "id": 8,
                 "name": "Cesar",
-                "username": "cesar.pz"
+                "username": "cesar.pz",
+                "profile_img": null
             },
             ...
         ],
@@ -911,12 +1003,20 @@ This API is modeled after Slack, which is a communication platform for organizat
         {
             "id": 1,
             "name": "Jack Wang",
-            "username": "jack.wang"
+            "username": "jack.wang",
+            "profile_img": {
+                "id": 5,
+                "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                "created_at": "2021-01-04 22:03:56.388387",
+                "width": 88,
+                "height": 62
+            }
         },
         {
             "id": 8,
             "name": "Cesar",
-            "username": "cesar.pz"
+            "username": "cesar.pz",
+            "profile_img": null
         },
         ...
     ]
@@ -976,7 +1076,14 @@ This API is modeled after Slack, which is a communication platform for organizat
         "sender": {
             "id": 1,
             "name": "Jack Wang",
-            "username": "jack.wang"
+            "username": "jack.wang",
+            "profile_img": {
+                "id": 5,
+                "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
+                "created_at": "2021-01-04 22:03:56.388387",
+                "width": 88,
+                "height": 62
+            }
         },
         "content": "anime is p cool",
         "timestamp": "2021-01-01 15:42:21.658703",

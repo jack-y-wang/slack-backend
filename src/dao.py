@@ -1,4 +1,5 @@
-from db import db, User, Workspace, Channel, Message, Thread, DM_group, DM_message, Asset
+from db import db
+from db import User, Workspace, Channel, Message, Thread, DM_group, DM_message, Asset, MessageImage, ProfileImage
 
 import datetime
 
@@ -21,7 +22,7 @@ def get_user_by_username(username):
         return optional_user, ""
     return None, "User with username not found"
 
-def create_user(name, email, username):
+def create_user(name, email, username, image_data):
     if name is None or email is None or username is None:
         return None, "Empty name, username, or username"
     user_exists, err = does_user_exist(email, username)
@@ -30,6 +31,13 @@ def create_user(name, email, username):
 
     user = User(name=name, email=email, username=username)
     db.session.add(user)
+    db.session.commit()
+
+    # add profile image if found in request data
+    if image_data:
+        image, _ = create_profile_image(user.id, image_data)
+        user.profile_image_id = image.id
+
     db.session.commit()
     return user, ""
 
@@ -89,6 +97,9 @@ def delete_user_by_id(user_id):
     optional_user, err = get_user_by_id(user_id)
     if not optional_user:
         return None, err
+    if optional_user.profile_image_id:
+        delete_image_by_id(optional_user.profile_image_id)
+        optional_user.profile_image_id = None
     db.session.delete(optional_user)
     db.session.commit()
     return optional_user, ""
@@ -356,7 +367,6 @@ def create_thread(message_id, sender_id, content, image_data):
     thread = Thread(
         sender_id=sender_id,
         content=content,
-        image=image,
         timestamp=timestamp,
         message_id=message_id
     )
@@ -365,7 +375,7 @@ def create_thread(message_id, sender_id, content, image_data):
     optional_message.users_following.append(user)
 
     if image_data is not None:
-        workspace = get_workspace_by_id(optional_message.channel.workspace_id)
+        workspace, _ = get_workspace_by_id(optional_message.channel.workspace_id)
         image, err = create_image(
             image_data=image_data,
             sender_id=sender_id, 
@@ -375,7 +385,7 @@ def create_thread(message_id, sender_id, content, image_data):
             workspace_id=workspace.id)
         if err:
             return None, err
-        sender.images.apppend(image)
+        user.images.append(image)
         optional_message.channel.images.append(image)
         workspace.images.append(image)
 
@@ -525,6 +535,31 @@ def delete_dm_message_by_id(message_id):
     return optional_dm_message, ""
 
 # --------------------- IMAGES ----------------------------
+def create_profile_image(user_id, image_data):
+    if image_data is None:
+        return None, "No base64 URL is found"
+    
+    profile_img = ProfileImage(user_id=user_id, image_data=image_data)
+    db.session.add(profile_img)
+    db.session.commit()
+    return profile_img, ""
+
+def update_profile_image(user_id, image_data):
+    if image_data is None:
+        return None, "No base64 URL is found"
+    
+    user, _ = get_user_by_id(user_id)
+    if user.profile_image_id:
+        curr_image_id = user.profile_image_id
+        delete_image_by_id(curr_image_id)
+
+    profile_img = ProfileImage(user_id=user_id, image_data=image_data)
+    db.session.add(profile_img)
+    db.session.commit()
+    user.profile_image_id = profile_img.id
+    db.session.commit()
+    return profile_img, ""
+
 def create_image(**kwargs):
     image_data = kwargs.get("image_data")
     source = kwargs.get("source")
@@ -536,7 +571,7 @@ def create_image(**kwargs):
     if image_data is None:
         return None, "No base64 URL is found"
     
-    image = Asset(
+    image = MessageImage(
         image_data=image_data, 
         sender_id=sender_id, 
         source=source, 
@@ -558,13 +593,23 @@ def delete_image_by_id(image_id):
     if err:
         return None, "image not found"
     
+    try:
+        optional_image.delete()
+    except Exception as e:
+        return None, f"Unable to delete image due to {e}"
+
     db.session.delete(optional_image)
-    if optional_image.source == "message":
-        message = Message.query.filter_by(id=optional_image.source_id).first()
-        message.image_id = None
-    else:
-        thread = Thread.query.filter_by(id=optional_image.source_id).first()
-        thread.image_id = None
+
+    # if image is from a message/thread remove from them
+    try:
+        if optional_image.source == "message":
+            message = Message.query.filter_by(id=optional_image.source_id).first()
+            message.image_id = None
+        else:
+            thread = Thread.query.filter_by(id=optional_image.source_id).first()
+            thread.image_id = None
+    except Exception as e:
+        pass
     
     db.session.commit()
     return optional_image, ""
