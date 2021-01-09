@@ -19,7 +19,7 @@ class DM_message(db.Model):
         self.content = kwargs.get("content")
         self.timestamp = kwargs.get("timestamp")
         self.dm_group_id = kwargs.get("dm_group_id")
-        self.udpated = False
+        self.updated = False
     
     def serialize(self):
         sender = User.query.filter_by(id=self.sender_id).first()

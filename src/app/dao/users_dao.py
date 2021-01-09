@@ -76,7 +76,7 @@ def get_threads_of_user(user_id):
     return get_user_by_id(user_id).threads
 
 def get_dms_of_user(user_id, workspace_id):
-    user, err = get_user_by_id(user_id)
+    user = get_user_by_id(user_id)
     if user is None:
         raise Exception("User is not found")
     workspace = Workspace.query.filter_by(id=workspace_id).first()
@@ -84,7 +84,7 @@ def get_dms_of_user(user_id, workspace_id):
         raise Exception("Workspace is not found")
     if workspace not in user.workspaces:
         raise Exception("User is not in Workspace")
-    return user.dms, ""
+    return user.dms
 
 def get_images_of_user(user_id):
     return get_user_by_id(user_id).images

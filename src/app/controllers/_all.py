@@ -18,6 +18,7 @@ from app.controllers.workspace_controllers.get_workspace_controller import *
 from app.controllers.workspace_controllers.get_channels_of_workspace_controller import *
 from app.controllers.workspace_controllers.get_images_of_workspace_controller import *
 from app.controllers.workspace_controllers.delete_workspace_controller import *
+from app.controllers.workspace_controllers.add_user_to_workspace_controller import *
 
 # CHANNEL CONTROLLERS
 from app.controllers.channel_controllers.get_channel_controller import *
@@ -69,6 +70,7 @@ controllers = [
     CreateWorkspaceController(),
     GetAllWorkspaceController(),
     GetWorkspaceController(),
+    AddUserToWorkspaceController(),
     GetChannelsOfWorkspaceController(),
     GetImagesOfWorkspaceController(),
     DeleteWorkspaceController(),

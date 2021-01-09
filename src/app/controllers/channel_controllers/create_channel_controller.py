@@ -18,5 +18,5 @@ class CreateChannelController(Controller):
         description = data.get("description")
         public = data.get('public', True)
         channel = channels_dao.create_channel_by_workspace_id(workspace_id, name, description, public)
-        return channel.serialize
+        return channel.serialize()
         

@@ -10,7 +10,6 @@ def create_channel_by_workspace_id(workspace_id, name, description, public):
     channel = get_channel_by_name(workspace, name)
     if channel is not None:
         raise Exception(f"Channel with name, {name}, already exists")
-    
     channel = Channel(name=name, description=description, public=public, workspace_id=workspace_id)
     db.session.add(channel)
     if channel.public == True:
@@ -26,6 +25,9 @@ def get_channel_by_id(channel_id):
 
 def get_channel_by_name(workspace, channel_name):
     channel = list(filter(lambda c : c.name==channel_name, workspace.channels))
+    print(f"this is the channel {channel}")
+    if not channel:
+        return None
     return channel[0]
 
 def get_messages_of_channel(channel_id):

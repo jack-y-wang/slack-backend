@@ -10,4 +10,4 @@ class GetChannelController(Controller):
         return ["GET"]
     
     def content(self, channel_id):
-        return channels_dao.get_channel_by_id(channel_id)
+        return channels_dao.get_channel_by_id(channel_id).serialize()

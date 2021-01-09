@@ -69,7 +69,7 @@ def update_message(msg_id, sender_id, content):
         message.content = content
     message.updated = True
     db.session.commit()
-    return message, ""
+    return message
 
 def get_users_following_message(msg_id):
     return get_message_by_id(msg_id).users
@@ -82,7 +82,8 @@ def delete_message_by_id(message_id):
     message = get_message_by_id(message_id)
     if message is None:
         raise Exception("Message not found")
-   
+    # channel = message.channel
+    # channel.messages.remove(message)
     db.session.delete(message)
     db.session.commit()
     return message

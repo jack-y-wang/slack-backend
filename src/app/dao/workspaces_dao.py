@@ -35,15 +35,16 @@ def get_workspace_by_url(url):
     return workspace
 
 def does_workspace_exist(name, url):
-    workspace, err = get_workspace_by_name(name)
-    if workspace:
-        return True, f"Workspace with name already exists: {workspace.serialize()}"
+    try:
+        workspace = get_workspace_by_name(name)
+        if workspace:
+            return True, f"Workspace with name already exists: {workspace.name}"
 
-    workspace, err = get_workspace_by_url(url)
-    if workspace:
-        return True, f"Workspace with url already exists: {workspace.serialize()}"
-    
-    return False, None
+        workspace = get_workspace_by_url(url)
+        if workspace:
+            return True, f"Workspace with url already exists: {workspace.url}"
+    except Exception as e:
+        return False, None
 
 def add_user_to_workspace(user_id, workspace_id):
     workspace = get_workspace_by_id(workspace_id)

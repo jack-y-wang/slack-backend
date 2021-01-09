@@ -7,7 +7,7 @@ class RemoveChannelController(Controller):
         return "remove-channel"
 
     def get_path(self):
-        return "/channels/remove/"
+        return "/channels/delete/"
     
     def get_methods(self):
         return ["DELETE"]
