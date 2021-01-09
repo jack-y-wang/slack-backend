@@ -3,6 +3,9 @@ from flask import request
 from app.dao import channels_dao
 
 class GetMessagesOfChannelController(Controller):
+    def get_name(self):
+        return "get-channel-messages"
+
     def get_path(self):
         return "/channels/<channel_id>/messages/"
     

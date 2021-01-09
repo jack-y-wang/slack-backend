@@ -3,6 +3,9 @@ from flask import request
 from app.dao import channels_dao
 
 class RemoveChannelController(Controller):
+    def get_name(self):
+        return "remove-channel"
+
     def get_path(self):
         return "/channels/<channel_id>/"
     

@@ -3,6 +3,9 @@ from flask import request
 from app.dao import channels_dao
 
 class CreateChannelController(Controller):
+    def get_name(self):
+        return "create-channel"
+
     def get_path(self):
         return "/workspaces/<workspace_id>/channels/"
     

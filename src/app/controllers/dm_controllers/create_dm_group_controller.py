@@ -3,6 +3,9 @@ from flask import request
 from app.dao import dms_dao
 
 class CreateDMGroupController(Controller):
+    def get_name(self):
+        return "create-dm-group"
+        
     def get_path(self):
         return "/workspaces/<workspace_id>/dms/"
     

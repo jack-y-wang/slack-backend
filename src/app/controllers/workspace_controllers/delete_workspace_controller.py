@@ -3,6 +3,9 @@ from flask import request
 from app.dao import workspaces_dao
 
 class DeleteWorkspaceController(Controller):
+    def get_name(self):
+        return "delete-workspace"
+
     def get_path(self):
         return "/workspaces/workspace_id/"
     

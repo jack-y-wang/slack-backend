@@ -3,6 +3,9 @@ from flask import request
 from app.dao import messages_dao
 
 class CreateMessageController(Controller):
+    def get_name(self):
+        return "create-message"
+        
     def get_path(self):
         return "/channels/<channel_id>/messages/"
     

@@ -3,6 +3,9 @@ from flask import request
 from app.dao import threads_dao
 
 class CreateThreadController(Controller):
+    def get_name(self):
+        return "create-thread"
+
     def get_path(self):
         return "/messages/<message_id>/threads/"
     

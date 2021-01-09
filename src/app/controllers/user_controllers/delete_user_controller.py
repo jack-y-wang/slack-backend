@@ -3,6 +3,9 @@ from flask import request
 from app.dao import users_dao
 
 class DeleteUserController(Controller):
+    def get_name(self):
+        return "delete-user"
+
     def get_path(self):
         return "/users/<user_id>/"
     

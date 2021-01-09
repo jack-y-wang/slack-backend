@@ -3,6 +3,9 @@ from flask import request
 from app.dao import dms_dao
 
 class DeleteDmGroupController(Controller):
+    def get_name(self):
+        return "delete-dm-group"
+        
     def get_path(self):
         return "/dms/<dm_id>/"
     

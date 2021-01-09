@@ -3,6 +3,9 @@ from flask import request
 from app.dao import messages_dao
 
 class GetMessageController(Controller):
+    def get_name(self):
+        return "get-message"
+
     def get_path(self):
         return "/messages/<message_id>/"
     

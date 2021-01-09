@@ -3,6 +3,9 @@ from flask import request
 from app.dao import users_dao
 
 class CreateUserController(Controller):
+    def get_name(self):
+        return "create-user"
+        
     def get_path(self):
         return "/users/"
     

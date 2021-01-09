@@ -3,6 +3,9 @@ from flask import request
 from app.dao import threads_dao
 
 class RemoveThreadController(Controller):
+    def get_name(self):
+        return "remove-thread"
+
     def get_path(self):
         return "/threads/<thread_id>/"
     

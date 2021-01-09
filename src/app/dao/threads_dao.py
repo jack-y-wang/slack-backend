@@ -2,7 +2,7 @@ from . import *
 from app.dao.users_dao import get_user_by_id
 from app.dao.workspaces_dao import get_workspace_by_id
 from app.dao.channels_dao import get_channel_by_id
-from app.dao.message_dao import get_message_by_id
+from app.dao.messages_dao import get_message_by_id
 from app.dao.images_dao import *
 
 import datetime

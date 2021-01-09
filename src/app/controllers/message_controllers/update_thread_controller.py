@@ -3,6 +3,9 @@ from flask import request
 from app.dao import threads_dao
 
 class UpdateThreadController(Controller):
+    def get_name(self):
+        return "update-thread"
+
     def get_path(self):
         return "/threads/<thread_id>/"
     

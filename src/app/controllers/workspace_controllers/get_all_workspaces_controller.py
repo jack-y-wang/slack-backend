@@ -3,6 +3,9 @@ from flask import request
 from app.dao import workspaces_dao
 
 class GetAllWorkspaceController(Controller):
+    def get_name(self):
+        return "get-all-workspaces"
+
     def get_path(self):
         return "/workspaces/"
     

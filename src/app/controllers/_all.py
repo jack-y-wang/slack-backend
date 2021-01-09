@@ -57,13 +57,12 @@ controllers = [
     HelloWorldController(),
 
     CreateUserController(),
+    GetUserController(),
     UpdateProfilePicController(),
     GetUsersFollowedThreadsController(),
-    GetUserController(),
     GetWorkspacesOfUserController(),
     GetUserImagesController(),
     GetUserChannelsController(),
-    GetUserImagesController(),
     GetUserDMsController(),
     DeleteUserController(),
 
@@ -75,7 +74,7 @@ controllers = [
     DeleteWorkspaceController(),
 
     GetChannelController(),
-    CreateChannelController,
+    CreateChannelController(),
     GetMessagesOfChannelController(),
     GetImagesOfChannelController(),
     AddUserToChannelController(),

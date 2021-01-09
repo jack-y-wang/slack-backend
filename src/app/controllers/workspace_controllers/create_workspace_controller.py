@@ -3,6 +3,9 @@ from flask import request
 from app.dao import workspaces_dao
 
 class CreateWorkspaceController(Controller):
+    def get_name(self):
+        return "create-workspace"
+
     def get_path(self):
         return "/workspaces/"
     
