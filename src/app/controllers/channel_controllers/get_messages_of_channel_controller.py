@@ -7,13 +7,12 @@ class GetMessagesOfChannelController(Controller):
         return "get-channel-messages"
 
     def get_path(self):
-        return "/channels/<channel_id>/messages/"
+        return "/channels/<int:channel_id>/messages/"
     
     def get_methods(self):
         return ["GET"]
     
-    def content(self):
-        channel_id = int(request.view_args["channel_id"])
+    def content(self, channel_id):
         messages = channels_dao.get_messages_of_channel(channel_id)
         return [msg.serialize_content() for msg in messages]
         

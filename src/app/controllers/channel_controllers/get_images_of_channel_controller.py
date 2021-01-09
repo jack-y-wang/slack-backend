@@ -4,12 +4,11 @@ from app.dao import channels_dao
 
 class GetImagesOfChannelController(Controller):
     def get_path(self):
-        return "/channels/<channel_id>/images/"
+        return "/channels/<int:channel_id>/images/"
     
     def get_methods(self):
         return ["GET"]
     
-    def content(self):
-        channel_id = int(request.view_args["channel_id"])
+    def content(self, channel_id):
         images = channels_dao.get_images_of_channel(channel_id)
         return [image.serialize() for image in images]

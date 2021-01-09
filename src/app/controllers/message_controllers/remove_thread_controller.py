@@ -7,13 +7,14 @@ class RemoveThreadController(Controller):
         return "remove-thread"
 
     def get_path(self):
-        return "/threads/<thread_id>/"
+        return "/threads/delete/"
     
     def get_methods(self):
         return ["DELETE"]
     
     def content(self):
-        thread_id = int(request.view_args["thread_id"])
+        data = request.get_json()
+        thread_id = data.get("thread_id")
         thread = threads_dao.delete_thread_by_id(thread_id)
         return thread.serialize()
         

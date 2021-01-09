@@ -7,15 +7,14 @@ class CreateDMGroupController(Controller):
         return "create-dm-group"
         
     def get_path(self):
-        return "/workspaces/<workspace_id>/dms/"
+        return "/workspaces/<int:workspace_id>/dms/"
     
     def get_methods(self):
         return ["POST"]
     
-    def content(self):
+    def content(self, workspace_id):
         data = request.get_json()
         users = data.get("users")
-        workspace_id = int(request.view_args["workspace_id"])
 
         dm_group = dms_dao.create_dm_group(workspace_id, users)
         return dm_group.serialize()

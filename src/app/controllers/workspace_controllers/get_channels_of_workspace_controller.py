@@ -7,13 +7,12 @@ class GetChannelsOfWorkspaceController(Controller):
         return "get-workspace-channels"
 
     def get_path(self):
-        return "/workspaces/<workspace_id>/channels/"
+        return "/workspaces/<int:workspace_id>/channels/"
     
     def get_methods(self):
         return ["GET"]
     
-    def content(self):
-        workspace_id = int(request.view_args["workspace_id"])
+    def content(self, workspace_id):
         channels = workspaces_dao.get_channels_of_workspace(workspace_id)
         return [channel.serialize() for channel in channels]
         

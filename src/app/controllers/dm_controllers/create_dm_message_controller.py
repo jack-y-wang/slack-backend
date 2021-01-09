@@ -7,16 +7,15 @@ class CreateDmMessageController(Controller):
         return "create-dm-message"
         
     def get_path(self):
-        return "/dms/<dm_id>/messages/"
+        return "/dms/<int:dm_id>/messages/"
     
     def get_methods(self):
         return ["POST"]
     
-    def content(self):
+    def content(self, dm_id):
         data = request.get_json()
         user_id = data.get("user_id")
         content = data.get("content")
-        dm_id = int(request.view_args["dm_id"])
 
         dm = dms_dao.create_dm_message(dm_id, user_id, content)
         return dm.serialize()

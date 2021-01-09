@@ -7,13 +7,14 @@ class RemoveChannelController(Controller):
         return "remove-channel"
 
     def get_path(self):
-        return "/channels/<channel_id>/"
+        return "/channels/remove/"
     
     def get_methods(self):
         return ["DELETE"]
     
     def content(self):
-        channel_id = int(request.view_args["channel_id"])
+        data = request.get_json()
+        channel_id = data.get("channel_id")
         channel = channels_dao.delete_channel(channel_id)
         return channel.serialize()
         

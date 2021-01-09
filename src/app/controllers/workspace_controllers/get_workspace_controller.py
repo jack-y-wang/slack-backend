@@ -12,7 +12,6 @@ class GetWorkspaceController(Controller):
     def get_methods(self):
         return ["GET"]
     
-    def content(self):
-        workspace_id = int(request.view_args["workspace_id"])
+    def content(self, workspace_id):
         workspace = workspaces_dao.get_workspace_by_id(workspace_id)
         return workspace.serialize()

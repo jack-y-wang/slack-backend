@@ -7,13 +7,14 @@ class DeleteWorkspaceController(Controller):
         return "delete-workspace"
 
     def get_path(self):
-        return "/workspaces/workspace_id/"
+        return "/workspaces/delete/"
     
     def get_methods(self):
         return ["DELETE"]
     
     def content(self):
-        workspace_id = int(request.view_args["workspace_id"])
+        data = request.get_json()
+        workspace_id = data.get("workspace_id")
         workspace = workspaces_dao.delete_workspace_by_id(workspace_id)
         return workspace.serialize()
         
