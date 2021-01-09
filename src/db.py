@@ -88,8 +88,7 @@ class User(db.Model):
             profile_img = None
         else:
             profile_img = Asset.query.filter_by(id=self.profile_image_id).first()
-            if profile_img:
-                profile_img = profile_img.serialize()
+            profile_img = profile_img.serialize()
             
         return {
             "id": self.id,
@@ -106,8 +105,7 @@ class User(db.Model):
             profile_img = None
         else:
             profile_img = Asset.query.filter_by(id=self.profile_image_id).first()
-            if profile_img:
-                profile_img = profile_img.serialize()
+            profile_img = profile_img.serialize()
 
         return {
             "id": self.id,
@@ -528,7 +526,7 @@ class MessageImage(Asset):
 class ProfileImage(Asset):
     __tablename__ = 'profile_image'
     id = db.Column(db.Integer, db.ForeignKey('asset.id'), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     __mapper_args__ = {
         'polymorphic_identity':'profile_image',
@@ -536,4 +534,4 @@ class ProfileImage(Asset):
 
     def __init__(self, **kwargs):
         self.create(kwargs.get("image_data"))
-        self.user_id = kwargs.get("user_id")
+        self.user_id =kwargs.get("user_id")
