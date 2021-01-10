@@ -54,6 +54,10 @@ from app.controllers.dm_controllers.get_dm_message_controller import *
 from app.controllers.dm_controllers.update_dm_message_controller import *
 from app.controllers.dm_controllers.delete_dm_message_controller import *
 
+# IMAGE CONTROLLERS
+from app.controllers.image_controllers.get_image_controller import *
+from app.controllers.image_controllers.delete_image_controller import *
+
 controllers = [
     HelloWorldController(),
 
@@ -103,5 +107,8 @@ controllers = [
     CreateDmMessageController(),
     GetDmMessageController(),
     UpdateDmMessageController(),
-    DeleteDmMessageController()
+    DeleteDmMessageController(),
+
+    GetImageController(),
+    DeleteImageController()
 ]
