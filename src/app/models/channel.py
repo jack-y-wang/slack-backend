@@ -17,7 +17,7 @@ class Channel(db.Model):
         secondary=association_table_userchannel,
         back_populates='channels'
     )
-    messages = db.relationship("Message", back_populates="channel", cascade='delete')
+    messages = db.relationship("Message", cascade='delete')
     images = db.relationship("MessageImage", cascade="delete")
 
     def __init__(self, **kwargs):

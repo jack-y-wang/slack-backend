@@ -77,11 +77,14 @@ def get_users_following_message(msg_id):
 def get_threads_of_message(msg_id):
     return get_message_by_id(msg_id).threads
 
-
 def delete_message_by_id(message_id):
     message = get_message_by_id(message_id)
     if message is None:
         raise Exception("Message not found")
+
+    if message.image_id:
+        delete_image_by_id(message.image_id)
+
     # channel = message.channel
     # channel.messages.remove(message)
     db.session.delete(message)

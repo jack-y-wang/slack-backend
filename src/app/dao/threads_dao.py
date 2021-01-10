@@ -21,7 +21,9 @@ def create_thread(message_id, sender_id, content, image_data):
     user = get_user_by_id(sender_id)
     if user is None:
         raise Exception("User is not found")
-    if not user in message.channel.users:
+
+    channel = get_channel_by_id(message.channel_id)
+    if not user in channel.users:
         raise Exception("User is not in the channel")
     
     timestamp = datetime.datetime.now()
@@ -37,7 +39,7 @@ def create_thread(message_id, sender_id, content, image_data):
 
     # create and image image obj if there's one
     if image_data is not None:
-        workspace = get_workspace_by_id(message.channel.workspace_id)
+        workspace = get_workspace_by_id(channel.workspace_id)
         image = create_image(
             image_data=image_data,
             sender_id=sender_id, 
@@ -48,7 +50,7 @@ def create_thread(message_id, sender_id, content, image_data):
         if image is None:
             return None
         user.images.append(image)
-        message.channel.images.append(image)
+        channel.images.append(image)
         workspace.images.append(image)
 
         thread.image_id = image.id
@@ -77,6 +79,9 @@ def delete_thread_by_id(thread_id):
         raise Exception("Thread not found")
     message = thread.message
     sender_id = thread.sender_id
+
+    if thread.image_id:
+        delete_image_by_id(thread.image_id)
 
     sender = get_user_by_id(sender_id)
     if sender is None:

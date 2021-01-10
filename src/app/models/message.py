@@ -2,6 +2,7 @@ from app import db
 from app.models.association_tables import *
 
 from app.models.asset import Asset
+from app.models.channel import Channel
 
 
 class Message(db.Model):
@@ -12,8 +13,7 @@ class Message(db.Model):
     content = db.Column(db.String, nullable=False)
     image_id = db.Column(db.Integer, db.ForeignKey("message_image.id"), nullable=True)
     timestamp = db.Column(db.DateTime, nullable=False)
-    channel_id = db.Column(db.Integer, db.ForeignKey("channel.id"), nullable=False)
-    channel = db.relationship("Channel", back_populates="messages")
+    channel_id = db.Column(db.Integer, db.ForeignKey("channel.id"))
     threads = db.relationship("Thread", back_populates='message', cascade='delete')
     users_following = db.relationship(
         "User", 
@@ -29,18 +29,23 @@ class Message(db.Model):
         self.updated = False
     
     def serialize(self):
+        channel = Channel.query.filter_by(id=self.channel_id).first()
+        if channel is None:
+            return None
+
         image = Asset.query.filter_by(id=self.image_id).first()
         if image is None:
             image_serialized = None
         else:
             image_serialized = image.serialize_for_message()
+
         return {
             "id": self.id,
             "sender_id": self.sender_id,
             "content": self.content,
             "image": image_serialized,
             "timestamp": str(self.timestamp),
-            "channel": self.channel.serialize_name(),
+            "channel": channel.serialize(),
             "threads": [t.serialize_content() for t in self.threads],
             "users_following": [u.serialize_name() for u in self.users_following],
             "updated": self.updated

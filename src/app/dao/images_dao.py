@@ -23,7 +23,10 @@ def create_image(**kwargs):
     return image
 
 def get_image_by_id(image_id):
-    return Asset.query.filter_by(id=image_id).first()
+    image = Asset.query.filter_by(id=image_id).first()
+    if not image:
+        raise Exception("Image not found")
+    return image
 
 def delete_image_by_id(image_id):
     optional_image = get_image_by_id(image_id)
