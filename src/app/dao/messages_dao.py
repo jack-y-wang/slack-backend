@@ -53,7 +53,10 @@ def create_message(channel_id, sender_id, content, image_data):
     return message
     
 def get_message_by_id(msg_id):
-    return Message.query.filter_by(id=msg_id).first()
+    message = Message.query.filter_by(id=msg_id).first()
+    if message is None:
+        raise Exception("Message not found")
+    return message
 
 def update_message(msg_id, sender_id, content):
     if sender_id is None or content is None:
@@ -77,10 +80,13 @@ def get_users_following_message(msg_id):
 def get_threads_of_message(msg_id):
     return get_message_by_id(msg_id).threads
 
-def delete_message_by_id(message_id):
+def delete_message_by_id(message_id, sender_id):
     message = get_message_by_id(message_id)
     if message is None:
         raise Exception("Message not found")
+
+    if message.sender_id != sender_id:
+        raise Exception("Can't delete message: user did not create message")
 
     if message.image_id:
         delete_image_by_id(message.image_id)

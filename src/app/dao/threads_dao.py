@@ -73,12 +73,15 @@ def update_thread_by_id(thread_id, sender_id, content):
     db.session.commit()
     return thread
 
-def delete_thread_by_id(thread_id):
+def delete_thread_by_id(thread_id, sender_id):
     thread = get_thread_by_id(thread_id)
     if thread is None:
         raise Exception("Thread not found")
     message = thread.message
     sender_id = thread.sender_id
+
+    if message.sender_id != sender_id:
+        raise Exception("Can't delete thread: user did not create thread")
 
     if thread.image_id:
         delete_image_by_id(thread.image_id)

@@ -3,22 +3,48 @@ from app.dao.images_dao import *
 
 
 def get_user_by_id(id):
-    return User.query.filter_by(id=id).first()
+    user = User.query.filter_by(id=id).first()
+    if user is None:
+        raise Exception("User not found")
+    return user
+
 
 def get_user_by_email(email):
-    return User.query.filter_by(email=email).first()
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        raise Exception("User not found")
+    return user
+
 
 def get_user_by_username(username):
-    return User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        raise Exception("User not found")
+    return user
 
-def create_user(name, email, username, image_data):
-    if name is None or email is None or username is None:
+
+def get_user_by_session_token(session_token):
+    user = User.query.filter(User.session_token == session_token).first()
+    if user is None:
+        raise Exception("User not found")
+    return user
+
+
+def get_user_by_update_token(update_token):
+    user = User.query.filter(User.update_token == update_token).first()
+    if user is None:
+        raise Exception("User not found")
+    return user
+
+
+def create_user(name, email, username, password, image_data):
+    if name is None or email is None or username is None or password is None:
         raise Exception("Empty name, username, or username")
     user_exists = does_user_exist(email, username)
     if user_exists:
-        return Exception("User with email or password already exists")
+        raise Exception("User with email or password already exists")
 
-    user = User(name=name, email=email, username=username)
+    user = User(name=name, email=email, username=username, password=password)
     db.session.add(user)
     db.session.commit()
 
@@ -30,6 +56,15 @@ def create_user(name, email, username, image_data):
     db.session.commit()
     return user
 
+
+def verify_credentials(email, password):
+    optional_user = get_user_by_email(email)
+    if optional_user is None:
+        return False, None 
+    
+    return optional_user.verify_password(password), optional_user
+
+
 def create_profile_image(user_id, image_data):
     if image_data is None:
         return None, "No base64 URL is found"
@@ -38,6 +73,7 @@ def create_profile_image(user_id, image_data):
     db.session.add(profile_img)
     db.session.commit()
     return profile_img, ""
+
 
 def update_profile_image(user_id, image_data):
     if image_data is None:
@@ -55,9 +91,11 @@ def update_profile_image(user_id, image_data):
     db.session.commit()
     return user
 
+
 def get_workspaces_of_user(user_id):
     user = get_user_by_id(user_id)
     return user.workspaces
+
 
 def get_users_channels_of_workspace(user_id, workspace_id):
     user = get_user_by_id(user_id)
@@ -72,13 +110,13 @@ def get_users_channels_of_workspace(user_id, workspace_id):
     channels = filter(lambda c : c.workspace_id == workspace_id, user.channels)
     return channels
 
+
 def get_threads_of_user(user_id):
     return get_user_by_id(user_id).threads
 
+
 def get_dms_of_user(user_id, workspace_id):
     user = get_user_by_id(user_id)
-    if user is None:
-        raise Exception("User is not found")
     workspace = Workspace.query.filter_by(id=workspace_id).first()
     if workspace is None:
         raise Exception("Workspace is not found")
@@ -86,13 +124,16 @@ def get_dms_of_user(user_id, workspace_id):
         raise Exception("User is not in Workspace")
     return user.dms
 
+
 def get_images_of_user(user_id):
     return get_user_by_id(user_id).images
+
 
 def does_user_exist(email, username):
     if get_user_by_email(email) or get_user_by_username(username):
         return True
     return False
+
 
 def delete_user_by_id(user_id):
     user = get_user_by_id(user_id)

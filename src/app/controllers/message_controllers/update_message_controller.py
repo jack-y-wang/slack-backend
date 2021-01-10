@@ -12,10 +12,11 @@ class UpdateMessageController(Controller):
     def get_methods(self):
         return ["POST"]
     
-    def content(self, message_id):
+    @authorize_user
+    def content(self, message_id, **kwargs):
+        user = kwargs.get("user")
         data = request.get_json()
-        user_id = data.get("user_id")
         content = data.get("content")
 
-        message = messages_dao.update_message(message_id, user_id, content)
+        message = messages_dao.update_message(message_id, user.id, content)
         return message.serialize()

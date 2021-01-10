@@ -1,13 +1,14 @@
 from app.controllers import *
 from flask import request
 from app.dao import users_dao
+from app.dao import sessions_dao
 
-class CreateUserController(Controller):
+class RegisterUserController(Controller):
     def get_name(self):
-        return "create-user"
+        return "register-user"
         
     def get_path(self):
-        return "/users/"
+        return "/register/"
     
     def get_methods(self):
         return ["POST"]
@@ -17,7 +18,10 @@ class CreateUserController(Controller):
         name = data.get("name")
         email = data.get("email")
         username = data.get('username')
+        password = data.get('password')
         profile_img = data.get('image')
 
-        user = users_dao.create_user(name, email, username, profile_img)
-        return user.serialize()
+        user = users_dao.create_user(name, email, username, password, profile_img)
+        session = sessions_dao.create_session(user.id)
+
+        return session.serialize_session()

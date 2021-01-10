@@ -7,13 +7,13 @@ class DeleteUserController(Controller):
         return "delete-user"
 
     def get_path(self):
-        return "/users/delete/"
+        return "/user/delete/"
     
     def get_methods(self):
         return ["DELETE"]
     
-    def content(self):
-        data = request.get_json()
-        user_id = data.get("user_id")
+    @authorize_user
+    def content(self, **kwargs):
+        user = kwargs.get("user")
         user = users_dao.delete_user_by_id(user_id)
         return user.serialize()

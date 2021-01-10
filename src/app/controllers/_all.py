@@ -2,7 +2,9 @@ from app.controllers.hello_world_controller import HelloWorldController
 
 # USER CONTROLLERS
 from app.controllers.user_controllers.update_profile_image_controller import *
-from app.controllers.user_controllers.create_user_controller import *
+from app.controllers.user_controllers.register_user_controller import *
+from app.controllers.user_controllers.login_user_controller import *
+from app.controllers.user_controllers.get_current_user_controller import *
 from app.controllers.user_controllers.get_followed_threads_of_user import *
 from app.controllers.user_controllers.get_user_controller import *
 from app.controllers.user_controllers.get_users_images import *
@@ -61,8 +63,10 @@ from app.controllers.image_controllers.delete_image_controller import *
 controllers = [
     HelloWorldController(),
 
-    CreateUserController(),
+    RegisterUserController(),
+    LoginUserController(),
     GetUserController(),
+    GetCurrentUserController(),
     UpdateProfilePicController(),
     GetUsersFollowedThreadsController(),
     GetWorkspacesOfUserController(),

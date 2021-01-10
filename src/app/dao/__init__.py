@@ -9,3 +9,4 @@ from app.models.message import Message
 from app.models.thread import Thread
 from app.models.user import User
 from app.models.workspace import Workspace
+from app.models.session import Session

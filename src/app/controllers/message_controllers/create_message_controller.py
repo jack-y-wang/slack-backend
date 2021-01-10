@@ -12,11 +12,12 @@ class CreateMessageController(Controller):
     def get_methods(self):
         return ["POST"]
     
-    def content(self, channel_id):
+    @authorize_user
+    def content(self, channel_id, **kwargs):
+        user = kwargs.get("user")
         data = request.get_json()
-        user_id = data.get("user_id")
         content = data.get("content")
         image = data.get("image")
 
-        message = messages_dao.create_message(channel_id, user_id, content, image)
+        message = messages_dao.create_message(channel_id, user.id, content, image)
         return message.serialize()

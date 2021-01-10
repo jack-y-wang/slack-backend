@@ -4,15 +4,16 @@ from app.dao import users_dao
 
 class UpdateProfilePicController(Controller):
     def get_path(self):
-        return "/users/update-profile-image/"
+        return "/update-profile/"
     
     def get_methods(self):
         return ["POST"]
     
-    def content(self):
+    @authorize_user
+    def content(self, **kwargs):
+        user = kwargs.get("user")
         data = request.get_json()
         image = data.get("image")
-        user_id = data.get("user_id")
 
-        user = users_dao.update_profile_image(user_id, image)
+        user = users_dao.update_profile_image(user.id, image)
         return user.serialize()

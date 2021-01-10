@@ -1,10 +1,11 @@
 from app.controllers import *
 from flask import request
 from app.dao import users_dao
+from app.dao import sessions_dao
 
-class GetUserImagesController(Controller):
+class GetCurrentUserController(Controller):
     def get_path(self):
-        return "/user/images/"
+        return "/user/"
     
     def get_methods(self):
         return ["GET"]
@@ -12,5 +13,4 @@ class GetUserImagesController(Controller):
     @authorize_user
     def content(self, **kwargs):
         user = kwargs.get("user")
-        images = users_dao.get_images_of_user(user.id)
-        return [i.serialize() for i in images]
+        return user.serialize()

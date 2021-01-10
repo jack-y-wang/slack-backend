@@ -12,11 +12,12 @@ class UpdateThreadController(Controller):
     def get_methods(self):
         return ["POST"]
     
-    def content(self, thread_id):
+    @authorize_user
+    def content(self, thread_id, **kwargs):
+        user = kwargs.get("user")
         data = request.get_json()
-        user_id = data.get("user_id")
         content = data.get("content")
 
-        thread = threads_dao.update_thread_by_id(thread_id, user_id, content)
+        thread = threads_dao.update_thread_by_id(thread_id, user.id, content)
         return thread.serialize()
         

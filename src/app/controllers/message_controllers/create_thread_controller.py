@@ -12,9 +12,10 @@ class CreateThreadController(Controller):
     def get_methods(self):
         return ["POST"]
     
+    @authorize_user
     def content(self, message_id):
+        user = kwargs.get("user")
         data = request.get_json()
-        user_id = data.get("user_id")
         content = data.get("content")
         image = data.get("image")
 
