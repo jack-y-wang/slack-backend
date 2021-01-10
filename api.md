@@ -6,6 +6,54 @@ This API is modeled after Slack, which is a communication platform for organizat
 - **Channels**: Channels are where team members can communicate collective and work together. Team members can communicate on a channel by posting a message and having a discussion via a Thread. Messages in a channel can also have an image attatched to it which is uploaded to an AWS S3 bucket.
 - **Direct Messaging**: DMs are a way to have a conversation outside of a channel in a workspace in a 1-on-1 scenario or as a group.
 
+- Users
+    - [Create a User](#create-a-user)
+    - [Get a specific user](#get-a-specific-user)
+    - [Delete User](#delete-user)
+    - [Get a user's workspaces](#get-user's-workspaces)
+    - [Get User's Channels of a Workspace](#get-user's-channels-of-a-workspace)
+    - [Get User's DMs of a Workspace](#get-user's-dms-of-a-workspace)
+    - [Get User's followed Threads](#get-user's-followed-threads)
+    - [Get User's posedd Images](#get-user's-posted-images)]
+- Workspace
+    - [Create a Workspace](#create-a-workspace)
+    - [Get a Workspace](#get-a-workspace)
+    - [Add User to a Workspace](#add-a-user-to-a-workspace)
+    - [Delete a Workspace](#delete-a-workspace)
+    - [Get Channels of a Workspace](#get-channels-of-a-workspace)
+    - [Get Images of a Workspace](#get-images-of-a-workspace)
+- Channel
+    - [Create a Channel](#create-a-channel)
+    - [Get a Channel](#get-a-channel)
+    - [Delete a Channel](#delete-a-channel)
+    - [Add a User to a Channel](#add-a-user-to-a-channel)
+    - [Remove a User to a Channel](#remove-a-user-to-a-channel)
+    - [Get Messages of a Channel](#get-messages-of-a-channel)
+    - [Get Images of a Channel](#get-images-of-a-channel)
+- Messages / Threads
+    - [Create a Message in a Channe](#create-a-message-in-a-channel)
+    - [Get a Message](#get-a-message)
+    - [Update a Message](#update-a-message)
+    - [Delete a Message](#delete-a-message)
+    - [Get Users following a Message](#get-Users-following-a-message-(and-it's-thread))
+    - [Create a Thread](#create-a-thread)
+    - [Get a Thread Response](#get-a-thread-response)
+    - [Update a Thread Response](#update-a-thread-response)
+    - [Delete a Thread Response](#delete-a-thread-response)
+- Direct Messages
+    - [Create a DM group](#create-a-dm-group)
+    - [Get a DM group](#get-a-dm-group)
+    - [Delete a DM group](#delete-a-dm-group)
+    - [Get users of a DM group](#get-users-of-a-dm-group)
+    - [Get messages of a DM group](#get-messages-of-a-dm-group)
+    - [Create a DM message](#create-a-dm-message)
+    - [Get a DM message](#get-a-dm-message)
+    - [Update a DM message](#update-a-dm-message)
+    - [Delete a DM message](#delete-a-dm-message)
+- Images
+    - [Get Image](#get-image-by-id)
+    - [Delete Image](#delete-image-by-id)
+
 # Users
 
 ## Create a User
@@ -40,7 +88,7 @@ This API is modeled after Slack, which is a communication platform for organizat
 } 
 ```
 
-## Get a specific User
+## Get a specific user
 **GET** `/users/{id}/`
 ##### Response
 ```yaml
@@ -76,7 +124,7 @@ This API is modeled after Slack, which is a communication platform for organizat
 ```
 * data: serialized user object
 
-## Delete User
+## Delete user
 **DELETE** `/users/{id}/`
 ##### Response
 ``` yaml
