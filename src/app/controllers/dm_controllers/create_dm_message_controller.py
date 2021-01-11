@@ -12,11 +12,12 @@ class CreateDmMessageController(Controller):
     def get_methods(self):
         return ["POST"]
     
-    def content(self, dm_id):
+    @authorize_user
+    def content(self, dm_id, **kwargs):
+        user = kwargs.get("user")
         data = request.get_json()
-        user_id = data.get("user_id")
         content = data.get("content")
 
-        dm = dms_dao.create_dm_message(dm_id, user_id, content)
+        dm = dms_dao.create_dm_message(dm_id, user.id, content)
         return dm.serialize()
         

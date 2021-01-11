@@ -7,7 +7,7 @@ class RemoveThreadController(Controller):
         return "remove-thread"
 
     def get_path(self):
-        return "/threads/<int:thread_id>/delete/"
+        return "/threads/<int:thread_id>/"
     
     def get_methods(self):
         return ["DELETE"]

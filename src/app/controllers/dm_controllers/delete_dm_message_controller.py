@@ -7,14 +7,14 @@ class DeleteDmMessageController(Controller):
         return "delete-dm-message"
         
     def get_path(self):
-        return "/dm-messages/delete/"
+        return "/dm-messages/<int:dm_id>/delete/"
     
     def get_methods(self):
         return ["DELETE"]
     
-    def content(self):
-        data = request.get_json()
-        dm_id = data.get("dm_id")
-        dm = dms_dao.delete_dm_message_by_id(dm_id)
+    @authorize_user
+    def content(self, **kwargs):
+        user = kwargs.get("user")
+        dm = dms_dao.delete_dm_message_by_id(dm_id, user.id)
         return dm.serialize()
         

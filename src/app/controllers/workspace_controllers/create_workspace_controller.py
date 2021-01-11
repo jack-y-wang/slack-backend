@@ -12,10 +12,13 @@ class CreateWorkspaceController(Controller):
     def get_methods(self):
         return ["POST"]
     
-    def content(self):
+    @authorize_user
+    def content(self, **kwargs):
+        user = kwargs.get("user")
         data = request.get_json()
         name = data.get("name")
         url = data.get("url")
 
         workspace = workspaces_dao.create_workspace(name, url)
+        workspace = workspaces_dao.add_user_to_workspace(user.id, workspace.id)
         return workspace.serialize()

@@ -80,7 +80,7 @@ def delete_thread_by_id(thread_id, sender_id):
     message = thread.message
     sender_id = thread.sender_id
 
-    if message.sender_id != sender_id:
+    if thread.sender_id != sender_id:
         raise Exception("Can't delete thread: user did not create thread")
 
     if thread.image_id:

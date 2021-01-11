@@ -7,7 +7,7 @@ class GetThreadController(Controller):
         return "get-thread"
         
     def get_path(self):
-        return "/threads/<int:thread_id>"
+        return "/threads/<int:thread_id>/"
     
     def get_methods(self):
         return ["GET"]

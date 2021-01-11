@@ -12,11 +12,15 @@ class CreateChannelController(Controller):
     def get_methods(self):
         return ["POST"]
     
-    def content(self, workspace_id):
+    @authorize_user
+    def content(self, workspace_id, **kwargs):
+        user = kwargs.get("user")
         data = request.get_json()
         name = data.get("name")
         description = data.get("description")
         public = data.get('public', True)
         channel = channels_dao.create_channel_by_workspace_id(workspace_id, name, description, public)
+        if not public:
+            channels_dao.add_user_to_channel(channel.id, user.id)
         return channel.serialize()
         

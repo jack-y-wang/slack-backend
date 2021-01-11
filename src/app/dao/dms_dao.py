@@ -88,14 +88,16 @@ def update_dm_message(message_id, sender_id, content):
     
     if not content is None:
         dm_message.content = content
-    dm_messsage.updated = True
+    dm_message.updated = True
     db.session.commit()
     return dm_message
 
-def delete_dm_message_by_id(message_id):
+def delete_dm_message_by_id(message_id, user_id):
     dm_message = get_dm_message_by_id(message_id)
     if dm_message is None:
         return None
+    if dm_message.user_id != user_id:
+        raise Exception("User did not create message")
     db.session.delete(dm_message)
     db.session.commit()
     return dm_message

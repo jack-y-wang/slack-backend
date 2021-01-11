@@ -12,5 +12,5 @@ class GetUserDMsController(Controller):
     @authorize_user
     def content(self, workspace_id, **kwargs):
         user = kwargs.get("user")
-        dms = users_dao.get_dms_of_user(user_id, workspace_id)
+        dms = users_dao.get_dms_of_user(user.id, workspace_id)
         return [dm.serialize() for dm in dms]

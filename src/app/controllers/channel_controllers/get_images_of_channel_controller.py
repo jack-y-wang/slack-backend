@@ -9,6 +9,12 @@ class GetImagesOfChannelController(Controller):
     def get_methods(self):
         return ["GET"]
     
-    def content(self, channel_id):
+    @authorize_user
+    def content(self, channel_id, **kwargs):
+        user = kwargs.get("user")
+        channel = channels_dao.get_channel_by_id(channel_id)
+        if not user in channel.users:
+            raise Excepation("User not in channel")
+
         images = channels_dao.get_images_of_channel(channel_id)
         return [image.serialize() for image in images]

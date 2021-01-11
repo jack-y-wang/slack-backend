@@ -13,12 +13,12 @@ class CreateThreadController(Controller):
         return ["POST"]
     
     @authorize_user
-    def content(self, message_id):
+    def content(self, message_id, **kwargs):
         user = kwargs.get("user")
         data = request.get_json()
         content = data.get("content")
         image = data.get("image")
 
-        thread = threads_dao.create_thread(message_id, user_id, content, image)
+        thread = threads_dao.create_thread(message_id, user.id, content, image)
         return thread.serialize()
         

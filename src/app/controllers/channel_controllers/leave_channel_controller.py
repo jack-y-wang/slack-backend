@@ -2,15 +2,12 @@ from app.controllers import *
 from flask import request
 from app.dao import channels_dao
 
-class GetMessagesOfChannelController(Controller):
-    def get_name(self):
-        return "get-channel-messages"
-
+class LeaveChannelController(Controller):
     def get_path(self):
-        return "/channels/<int:channel_id>/messages/"
+        return "/channels/<int:channel_id>/leave/"
     
     def get_methods(self):
-        return ["GET"]
+        return ["POST"]
     
     @authorize_user
     def content(self, channel_id, **kwargs):
@@ -18,7 +15,5 @@ class GetMessagesOfChannelController(Controller):
         channel = channels_dao.get_channel_by_id(channel_id)
         if not user in channel.users:
             raise Excepation("User not in channel")
-
-        messages = channels_dao.get_messages_of_channel(channel_id)
-        return [msg.serialize_content() for msg in messages]
-        
+        channel = channels_dao.delete_user_from_channel(channel_id, user_id)
+        return channel.serialize()

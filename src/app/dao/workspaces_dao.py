@@ -60,6 +60,25 @@ def add_user_to_workspace(user_id, workspace_id):
     db.session.commit()
     return workspace
 
+def is_user_in_workspace(user_id, workspace_id):
+    workspace = get_workspace_by_id(workspace_id)
+    user = get_user_by_id(user_id)
+    if user in workspace.users:
+        return True, workspace
+    return False, None
+
+def delete_user_from_workspace(workspace_id, user_id):
+    workspace = get_workspace_by_id(workspace_id)
+    if workspace is None:
+        raise Exception("Workspace not found")
+    user = get_user_by_id(user_id)
+    if user is None:
+        raise Exception("User not found")
+    
+    workspace.users.remove(user)
+    db.session.commit()
+    return workspace
+
 def get_channels_of_workspace(workspace_id):
     workspace = get_workspace_by_id(workspace_id)
     return workspace.channels
