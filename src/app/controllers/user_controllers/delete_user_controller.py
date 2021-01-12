@@ -15,5 +15,5 @@ class DeleteUserController(Controller):
     @authorize_user
     def content(self, **kwargs):
         user = kwargs.get("user")
-        user = users_dao.delete_user_by_id(user_id)
+        user = users_dao.delete_user_by_id(user.id)
         return user.serialize()
