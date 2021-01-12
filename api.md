@@ -7,18 +7,20 @@ This API is modeled after Slack, which is a communication platform for organizat
 - **Direct Messaging**: DMs are a way to have a conversation outside of a channel in a workspace in a 1-on-1 scenario or as a group.
 
 - Users
-    - [Create a User](#create-a-user)
-    - [Get a specific user](#get-a-specific-user)
-    - [Delete User](#delete-user)
-    - [Get a user's workspaces](#get-user's-workspaces)
-    - [Get User's Channels of a Workspace](#get-user's-channels-of-a-workspace)
-    - [Get User's DMs of a Workspace](#get-user's-dms-of-a-workspace)
-    - [Get User's followed Threads](#get-user's-followed-threads)
-    - [Get User's posedd Images](#get-user's-posted-images)]
+    - [Register](#register)
+    - [Login](#login)
+    - [Get information of current user](#get-information-of-current-user)
+    -[Update current user](#update-current-user)
+    - [Delete current user](#delete-current-user)
+    - [Get workspaces of current user](#get-workspaces-of-current-user)
+    - [Get channels in a workspace of current user](#get-channels-in-a-workspace-of-current-user)
+    - [Get DMS in a workspace of current user](#get-dms-in-a-workspace-of-current-user)
+    - [Get following threads of current user](#get-following-threads-of-current-user)
+    - [Get posted images of current user](#get-posted-images-of-current-user)]
 - Workspace
     - [Create a Workspace](#create-a-workspace)
     - [Get a Workspace](#get-a-workspace)
-    - [Add User to a Workspace](#add-a-user-to-a-workspace)
+    - [Join a Workspace](#join-a-workspace)
     - [Delete a Workspace](#delete-a-workspace)
     - [Get Channels of a Workspace](#get-channels-of-a-workspace)
     - [Get Images of a Workspace](#get-images-of-a-workspace)
@@ -26,8 +28,9 @@ This API is modeled after Slack, which is a communication platform for organizat
     - [Create a Channel](#create-a-channel)
     - [Get a Channel](#get-a-channel)
     - [Delete a Channel](#delete-a-channel)
-    - [Add a User to a Channel](#add-a-user-to-a-channel)
-    - [Remove a User to a Channel](#remove-a-user-to-a-channel)
+    - [current user adds a user to a channel](#add-a-user-to-a-channel)
+    - [Current user joins a channel](#current-user-joins-a-channel)
+    - [Current user leaves a channel](#current-user-leaves-a-channel)
     - [Get Messages of a Channel](#get-messages-of-a-channel)
     - [Get Images of a Channel](#get-images-of-a-channel)
 - Messages / Threads
@@ -55,41 +58,60 @@ This API is modeled after Slack, which is a communication platform for organizat
     - [Delete Image](#delete-image-by-id)
 
 # Users
+- Endpoints: [Register](#register) | [Login](#login) | [Get information of current user](#get-information-of-current-user) | [Update current user](#update-current-user) | [Delete current user](#delete-current-user) | [Get workspaces of current user](#get-workspaces-of-current-user) | [Get channels in a workspace of current user](#get-channels-in-a-workspace-of-current-user) | [Get DMS in a workspace of current user](#get-dms-in-a-workspace-of-current-user) | [Get following threads of current user](#get-following-threads-of-current-user) | [Get posted images of current user](#get-posted-images-of-current-user)]
+- Other categories: [Workspace](#workspace) | [Channel](#channel) | [Threads](#threads) | [DMs](#dms) | [Images](#images)
 
-## Create a User
-**POST** `/users/`
+## Register
+**POST** ``/api/register/`
 ##### Request
 ``` yaml
 {
     "name": "Jack Wang",
     "email": "jw123@gmail.com",
     "username": "jack.wang",
+    "password": "123456789"
     "image: <OPTIONAL BASE64 IMAGE>
 }
 ```
 ##### Response
 ``` yaml
 {
-    "success": true,
     "data": {
-        "id": 1,
-        "name": "Jack Wang",
-        "email": "jw123@gmail.com",
-        "username": "jack.wang",
-        "profile_img": null or {
-            "id": 5,
-            "url": "https://slack-backend-images.s3-us-west-1.amazonaws.com/0IOUZDUR6QUWHSNO.png",
-            "created_at": "2021-01-04 22:03:56.388387",
-            "width": 88,
-            "height": 62
-        }
-        "workspaces": []
-    }
-} 
+        "session_expiration": 1610326829,
+        "session_token": "t31830f87f1b6469d13b3a918646aafd68795b19",
+        "update_token": "l1454c11f7a9271afd0461104aaf42545be6fa3d"
+    },
+    "success": true,
+    "timestamp": 1610310429
+}
 ```
 
-## Get a specific user
-**GET** `/users/{id}/`
+
+## Login
+**POST** ``/api/login/`
+##### Request
+``` yaml
+{
+    "email": "jw123@gmail.com",
+    "password": "123456789"
+}
+```
+##### Response
+``` yaml
+{
+    "data": {
+        "session_expiration": 1610326829,
+        "session_token": "t31830f87f1b6469d13b3a918646aafd68795b19",
+        "update_token": "l1454c11f7a9271afd0461104aaf42545be6fa3d"
+    },
+    "success": true,
+    "timestamp": 1610310429
+}
+```
+
+
+## Get information of current user
+**GET** `/api/user/`
 ##### Response
 ```yaml
 {
@@ -119,33 +141,54 @@ This API is modeled after Slack, which is a communication platform for organizat
             },
             ...
         ]
-    }
+    },
+    "timestamp": 1610310429
 }
 ```
-* data: serialized user object
+* **data: serialized user object**
 
-## Delete user
-**DELETE** `/users/{id}/`
+
+## Update current user
+**POST** ``/api/login/`
+##### Request
+``` yaml
+{
+    "image": <OPTIONAL BASE64 IMAGE>
+}
+```
 ##### Response
 ``` yaml
 {
     "success": true,
-    "data": <SERIALIZED USER OBJECT>
+    "data": <SERIALIZED USER OBJECT>,
+    "timestamp": 1610310429
 } 
 ```
 
-## Get User's Workspaces
-**GET** `/users/{id}/workspaces/`
+## Delete current user
+**DELETE** `/api/user/update-profile/`
 ##### Response
 ``` yaml
 {
     "success": true,
-    "data": [<SERIALIZED WORKSPACE OBJECT>, ...]
+    "data": <SERIALIZED USER OBJECT>,
+    "timestamp": 1610310429
 } 
 ```
 
-## Get User's Channels of a Workspace
-**GET** `/users/{id}/workspaces/{id}/channels/`
+## Get workspaces of current user
+**GET** `/api/user/workspaces/`
+##### Response
+``` yaml
+{
+    "success": true,
+    "data": [<SERIALIZED WORKSPACE OBJECT>, ...],
+    "timestamp": 1610310429
+} 
+```
+
+## Get channels in a workspace of current user
+**GET** `/api/user/workspaces/{id}/channels/`
 ```yaml
 {
     "success": true,
@@ -161,12 +204,13 @@ This API is modeled after Slack, which is a communication platform for organizat
             "description": "for chats"
         },
         ...
-    ]
+    ],
+    "timestamp": 1610310429
 }
 ```
 
-## Get User's DMs of a Workspace
-**GET** `/users/{id}/workspaces/{id}/dms/`
+## Get DMs in a workspace of current user
+**GET** `/api/user/workspaces/{id}/dms/`
 ```yaml
 
     "success": true,
@@ -196,7 +240,8 @@ This API is modeled after Slack, which is a communication platform for organizat
                     "name": "Anthony P",
                     "username": "a.p",
                     "profile_imag": null
-                }
+                },
+                ...
             ],
             "messages": [
                 {
@@ -238,13 +283,14 @@ This API is modeled after Slack, which is a communication platform for organizat
             ]
         },
         ...
-    ]
+    ],
+    "timestamp": 1610310429
 }
 ```
 
-## Get User's followed Threads
+## Get following threads of current user
 * Will get the Messages the user either sent or replied in a thread
-**GET** `/users/{id}/threads/`
+**GET** `/api/user/threads/`
 ##### Response
 ``` yaml
 {
@@ -281,12 +327,13 @@ This API is modeled after Slack, which is a communication platform for organizat
             "updated": true
         },
         ... 
-    ]
+    ],
+    "timestamp": 1610310429
 }
 ```
 
-## Get User's posted Images
-**GET** `/users/{id}/images/`
+## Get posted images of current user
+**GET** `/api/user/images/`
 ##### Response
 ``` yaml
 {
@@ -313,13 +360,17 @@ This API is modeled after Slack, which is a communication platform for organizat
             "source_id": "3"
         },
         ...
-    ]
+    ],
+    "timestamp": 1610310429
 }
 ```
 
 # Workspace
+- Endpoints: [Create a Workspace](#create-a-workspace) | [Get a Workspace](#get-a-workspace) | [Join a Workspace](#join-a-workspace) | [Delete a Workspace](#delete-a-workspace) | [Get Channels of a Workspace](#get-channels-of-a-workspace) | [Get Images of a Workspace](#get-images-of-a-workspace)
+- Other Categories: [User](#user) | [Channel](#channel) | [Threads](#threads) | [DMs](#dms) | [Images](#images)
+
 ## Create a Workspace
-**POST** `/workspaces/`
+**POST** `/api/workspaces/`
 ##### Request
 ``` yaml
 {
@@ -338,7 +389,8 @@ This API is modeled after Slack, which is a communication platform for organizat
         "url": "/csm",
         "users": [],
         "channels": []
-    }
+    },
+    "timestamp": 1610310429
 }
 ```
 * *users* and *channels* are empty when initially creating a workspace
@@ -386,40 +438,39 @@ This API is modeled after Slack, which is a communication platform for organizat
             }
             ...
         ]
-    }
+    },
+    "timestamp": 1610310429
 }
 ```
-* data: serialized workspace object
+* **data: serialized workspace object**
 
-## Add a User to a Workspace
-**POST** `/workspaces/{id}/add-user/`
-##### Request
-``` yaml
-{
-    "user_id": 1
-}
-```
+## Join a workspace
+current user joins workspace
+
+**POST** `/api/workspaces/{id}/join/`
 ##### Response
 ``` yaml
 {
     "success": true,
-    "data": <SERIALIZED WORKSPACE OBJECT>
+    "data": <SERIALIZED WORKSPACE OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 * **User** is automatically added to all public channels in the Workspace
 
 ## Delete a Workspace
-**DELETE** `/workspaces/{id}/`
+**DELETE** `/api/workspaces/{id}/`
 ##### Response
 ``` yaml
     "success": true,
-    "data": <SERIALIZED WORKSPACE OBJECT>
+    "data": <SERIALIZED WORKSPACE OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 * this will also delete all the channels in the workspace
 
 ## Get Channels of a Workspace
-**GET** `/workspaces/{id}/channels/`
+**GET** `/api/workspaces/{id}/channels/`
 ```yaml
 {
     "success": true,
@@ -494,12 +545,13 @@ This API is modeled after Slack, which is a communication platform for organizat
             "messages": []
         },
         ...
-    ]
+    ],
+    "timestamp": 1610310429
 }
 ```
 
 ## Get Images of a Workspace
-**GET** `/workspaces/{id}/images/`
+**GET** `/api/workspaces/{id}/images/`
 ``` yaml
 {
     "success": true,
@@ -525,13 +577,18 @@ This API is modeled after Slack, which is a communication platform for organizat
             "source_id": "3"
         },
         ...
-    ]
+    ],
+    "timestamp": 1610310429
 }
 ```
 
 # Channel
+- Endpoints: [Create a Channel](#create-a-channel) | [Get a Channel](#get-a-channel) | [Delete a Channel](#delete-a-channel)
+ | [current user adds a user to a channel](#add-a-user-to-a-channel) | [Current user joins a channel](#current-user-joins-a-channel) | [Current user leaves a channel](#current-user-leaves-a-channel) | [Get Messages of a Channel](#get-messages-of-a-channel) | [Get Images of a Channel](#get-images-of-a-channel)
+ - Other Categories: [User](#user) | [Workspace](#workspace) | [Threads](#threads) | [DMs](#dms) | [Images](#images)
+
 ## Create a Channel
-**POST** `/workspaces/{id}/channels/`
+**POST** `/api/workspaces/{id}/channels/`
 ##### Request
 ```yaml
 {
@@ -571,34 +628,39 @@ This API is modeled after Slack, which is a communication platform for organizat
             ...
         ],
         "messages": []
-    }
+    },
+    "timestamp": 1610310429
 }
 ```
 * data: serialized channel object
 * **messages** will be empty when initializing a channel
 
 ## Get a Channel
-**GET** `/channels/{id}/`
+**GET** `/api/channels/{id}/`
 ##### Response
 ```yaml
 {
     "success": true,
-    "data": <SERIALIZED CHANNEL OBJECT>
+    "data": <SERIALIZED CHANNEL OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 
 ## Delete a Channel
-**DELETE** `/channels/{id}/`
+**DELETE** `/api/channels/{id}/`
 ##### Response
 ``` yaml
     "success": true,
-    "data": <SERIALIZED CHANNEL OBJECT>
+    "data": <SERIALIZED CHANNEL OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 * this will also delete all the messages in the channel
 
-## Add a User to a Channel
-**POST** `/channels/{id}/users/`
+## Current user adds a user to a channel
+current user must already be in the channel to add another user
+
+**POST** `/api/channels/{id}/users/`
 ##### Request
 ```yaml
 {
@@ -610,22 +672,38 @@ This API is modeled after Slack, which is a communication platform for organizat
 ```yaml
 {
     "success": true,
-    "data": <SERIALIZED CHANNEL OBJECT>
+    "data": <SERIALIZED CHANNEL OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 
-## Remove a User from a Channel
-**DELETE** `/channels/{id}/users/{id}/`
+## Current user joins a channel
+channel must be public for current user to join
+
+**POST** `/api/channels/{id}/join/`
+
 ##### Response
 ```yaml
 {
     "success": true,
-    "data": <SERIALIZED CHANNEL OBJECT>
+    "data": <SERIALIZED CHANNEL OBJECT>,
+    "timestamp": 1610310429
+}
+```
+
+## Current user leaves a channel
+**POST** `/api/channels/{id}/leave/`
+##### Response
+```yaml
+{
+    "success": true,
+    "data": <SERIALIZED CHANNEL OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 
 ## Get Messages of a Channel
-**GET** `/channels/{id}/messages/`
+**GET** `/api/channels/{id}/messages/`
 ##### Response
 ```yaml
 {
@@ -646,12 +724,13 @@ This API is modeled after Slack, which is a communication platform for organizat
             "updated": true
         },
         ...
-    ]
+    ],
+    "timestamp": 1610310429
 }
 ```
 
 ## Get Images of a Channel
-**GET** `/channels/{id}/images/`
+**GET** `/api/channels/{id}/images/`
 ``` yaml
 {
     "success": true,
@@ -677,17 +756,22 @@ This API is modeled after Slack, which is a communication platform for organizat
             "source_id": "3"
         },
         ...
-    ]
+    ],
+    "timestamp": 1610310429
 }
 ```
 
 # Threads
+- Endpoints [Create a Message in a Channe](#create-a-message-in-a-channel) | [Get a Message](#get-a-message) | [Update a Message](#update-a-message) | [Delete a Message](#delete-a-message) | [Get Users following a Message](#get-Users-following-a-message-(and-it's-thread)) | [Create a Thread](#create-a-thread) | [Get a Thread Response](#get-a-thread-response) | [Update a Thread Response](#update-a-thread-response) | [Delete a Thread Response](#delete-a-thread-response)
+Other Categories: [User](#user) | [Workspace](#workspace) | [Channel](#channel) | [DMs](#dms) | [Images](#images)
+
 ## Create a Message in a Channel
-**POST** `/channels/{id}/messages/`
+current user creates a message
+
+**POST** `/api/channels/{id}/messages/`
 ##### Request
 ```yaml
 {
-    "user_id": 1,
     "content": "Hello World",
     "image": <BASE64 OF IMAGE> - optional
 }
@@ -730,31 +814,34 @@ This API is modeled after Slack, which is a communication platform for organizat
             },
             ...
         ],
-        "updated": false
-    }
+        "updated": false,
+    },
+    "timestamp": 1610310429
 }
 ```
-* data: serialized message object
+* **data: serialized message object**
 * **users_following** will be users who either created the message or replied in a thread
 * **threads** will be empty when intially creating a message
 
 ## Get A Message
-**GET** `/messages/{id}/`
+**GET** `/api/messages/{id}/`
 ##### Response
 ```yaml
 {
     "success": true,
-    "data": <SERIALIZED MESSAGE OBJECT>
+    "data": <SERIALIZED MESSAGE OBJECT>,
+    * Can't update the image of a message after uploading. But the message or the image can be deleted
 } 
 ```
 
 ## Update A Message
-**POST** `/messages/{id}/`
+current user updates a previous message made by them
 * Can't update the image of a message after uploading. But the message or the image can be deleted
+
+**POST** `/api/messages/{id}/`
 ##### Request
 ```yaml
 {
-    "user_id": 1,
     "content": "Hello World"
 }
 ```
@@ -763,22 +850,26 @@ This API is modeled after Slack, which is a communication platform for organizat
 ```yaml
 {
     "success": true,
-    "data": <SERIALIZED MESSAGE OBJECT>
+    "data": <SERIALIZED MESSAGE OBJECT>,
+    "timestamp": 1610310429
 } 
 ```
 
 ## Delete a Message
-**DELETE** `/messages/{id}/`
+current user deletes their message
+
+**DELETE** `/api/messages/{id}/`
 ##### Response
 ``` yaml
     "success": true,
-    "data": <SERIALIZED MESSAGE OBJECT>
+    "data": <SERIALIZED MESSAGE OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 * this will also delete the messages threads
 
 ## Get Users following a Message (and it's thread)
-**GET** `/messages/{id}/users/`
+**GET** `/api/messages/{id}/users/`
 ##### Response
 ``` yaml
 {
@@ -808,7 +899,7 @@ This API is modeled after Slack, which is a communication platform for organizat
 ```
 
 ## Get the threads (replies) of a Message
-**GET** `/messages/{id}/threads/`
+**GET** `/api/messages/{id}/threads/`
 ##### Response
 ```yaml
 {
@@ -838,16 +929,18 @@ This API is modeled after Slack, which is a communication platform for organizat
             "updated": false
         },
         ...
-    ]
+    ],
+    "timestamp": 1610310429
 }
 ```
 
 ## Create a Thread
-**POST** `/messages/<int:msg_id>/threads/`
+current user creates a thread reply to a message
+
+**POST** `/api/messages/<int:msg_id>/threads/`
 ##### Request
 ```yaml
 {
-    "user_id": 2,
     "content": "hiiiii",
     "image": <BASE64 OF IMAGE> - optional
 }
@@ -877,46 +970,57 @@ This API is modeled after Slack, which is a communication platform for organizat
             "updated": false
         },
         "updated": false
-    }
+    },
+    "timestamp": 1610310429
 }
 ```
-* data: serialized thread object
+* **data: serialized thread object**
 
 ## Get a Thread Response
-**GET** `/threads/{id}/`
+**GET** `/api/threads/{id}/`
 ##### Response
 ``` yaml
 {
     "success": true,
-    "data": <SERIALIZED THREAD OBJECT>
+    "data": <SERIALIZED THREAD OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 
 ## Update a Thread Response
-**POST** `/threads/{id}/`
+current user updates their thread message
 * Can't update the image of a thread after uploading. But the thread or the image can be deleted
+
+**POST** `/api/threads/{id}/`
 ##### Response
 ``` yaml
 {
     "success": true,
-    "data": <SERIALIZED THREAD OBJECT>
+    "data": <SERIALIZED THREAD OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 
 ## Delete a Thread Response
-**DELETE** `/threads/{id}/`
+current user deletes their thread message
+**DELETE** `/api/threads/{id}/`
 ##### Response
 ``` yaml
 {
     "success": true,
-    "data": <SERIALIZED THREAD OBJECT>
+    "data": <SERIALIZED THREAD OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 
 # DMs
+- Endpoints: [Create a DM group](#create-a-dm-group) | [Get a DM group](#get-a-dm-group) | [Delete a DM group](#delete-a-dm-group) | [Get users of a DM group](#get-users-of-a-dm-group) | [Get messages of a DM group](#get-messages-of-a-dm-group) | [Create a DM message](#create-a-dm-message) | [Get a DM message](#get-a-dm-message) | [Update a DM message](#update-a-dm-message) | [Delete a DM message](#delete-a-dm-message)
+- Other categories: [User](#user) | [Workspace](#workspace) | [Channel](#channel) | [Threads](#threads) | [Images](#images)
 
 ## Create a DM group
-**POST** `/workspaces/{id}/dms/' 
+current user will automatically be added to dm group
+
+**POST** `/api/workspaces/{id}/dms/' 
 ##### Request
 ``` yaml
 {
@@ -961,13 +1065,14 @@ This API is modeled after Slack, which is a communication platform for organizat
             ...
         ],
         "messages": []
-    }
+    },
+    "timestamp": 1610310429
 }
 ```
 * **messages** is empty when creating a DM group
 
 ## Get a DM group
-**GET** `/dms/{id]/`
+**GET** `/api/dms/{id]/`
 ##### Response
 ```yaml
 {
@@ -1026,23 +1131,25 @@ This API is modeled after Slack, which is a communication platform for organizat
             },
             ...
         ]
-    }
+    },
+    "timestamp": 1610310429
 }
 ```
-* data: serialized DM group object
+* **data: serialized DM group object**
 
 ## Delete a DM group
-**DELETE** `/dms/{id}/`
+**DELETE** `/api/dms/{id}/`
 ##### Response
 ``` yaml
 {
     "success": true,
-    "data": <SERIALIZED DM GROUP OBJECT>
+    "data": <SERIALIZED DM GROUP OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 
 ## Get users of a DM group
-**GET** `/dms/{id}/users/`
+**GET** `/api/dms/{id}/users/`
 ##### Response
 ``` yaml
 {
@@ -1067,12 +1174,13 @@ This API is modeled after Slack, which is a communication platform for organizat
             "profile_img": null
         },
         ...
-    ]
+    ],
+    "timestamp": 1610310429
 } 
 ```
 
 ## Get messages of a DM group
-**GET** `/dms/{id}/messages/`
+**GET** `/api/dms/{id}/messages/`
 ##### Response
 ```yaml
 {
@@ -1102,16 +1210,18 @@ This API is modeled after Slack, which is a communication platform for organizat
             "updated": false
         },
         ...
-    ]
+    ],
+    "timestamp": 1610310429
 }
 ```
 
 ## Create a DM message
-**POST** `/dms/{id}/messages/`
+current user creates a dm message
+
+**POST** `/api/dms/{id}/messages/`
 ##### Request
 ```yaml
 {
-    "user_id": 1,
     "content": "anime is p cool"
 }
 ```
@@ -1157,10 +1267,11 @@ This API is modeled after Slack, which is a communication platform for organizat
                 ...
             ]
         } 
-    }
+    },
+    "timestamp": 1610310429
 }
 ```
-* data: serialized DM message
+* **data: serialized DM message**
 
 ## Get a DM message
 **GET** '/dm-messages/{id}/`
@@ -1168,7 +1279,8 @@ This API is modeled after Slack, which is a communication platform for organizat
 ``` yaml
 {
     "success": true,
-    "data": <SERIALIZED DM MESSAGE OBJECT>
+    "data": <SERIALIZED DM MESSAGE OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 
@@ -1178,7 +1290,8 @@ This API is modeled after Slack, which is a communication platform for organizat
 ``` yaml
 {
     "success": true,
-    "data": <SERIALIZED DM MESSAGE OBJECT>
+    "data": <SERIALIZED DM MESSAGE OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 
@@ -1188,14 +1301,17 @@ This API is modeled after Slack, which is a communication platform for organizat
 ``` yaml
 {
     "success": true,
-    "data": <SERIALIZED DM MESSAGE OBJECT>
+    "data": <SERIALIZED DM MESSAGE OBJECT>,
+    "timestamp": 1610310429
 }
 ```
 
 # Images
 Images are created with a message or a thread reply - An image cannot be made alone
+- Other categories: [User](#user) | [Workspace](#workspace) | [Channel](#channel) | [Threads](#threads) | [DMs](#dms)
+
 ## Get Image by ID
-**GET** `/images/{id}/`
+**GET** `/api/images/{id}/`
 ##### Response
 ``` yaml
 {
@@ -1216,7 +1332,7 @@ Images are created with a message or a thread reply - An image cannot be made al
 * source: message or thread
 
 ## Delete Image by ID
-**DELETE** `/images/{id}/`
+**DELETE** `/api/images/{id}/`
 ##### Response
 ``` yaml
 {

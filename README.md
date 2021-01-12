@@ -11,7 +11,9 @@ Made with: Flask, SQLAlchemy, & AWS S3
 API Spec can be found [here](https://github.com/jack-y-wang/slack-backend/blob/master/api.md)
 
 ## Setup
+
 ### Setup virtual env
+
 ```python
 virtualenv venv
 . venv/bin/activate
@@ -19,23 +21,28 @@ pip3 install -r requirements.txt
 ```
 
 ### Setup AWS env
+
 [Guide](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html)
 
 Create the `credentials` and `config` files. By default, their locations are at `~/.aws/credentials` and `~/.aws/cofig`
 
 credentials:
+
 ```python
 [default]
 aws_access_key_id = YOUR_ACCESS_KEY
 aws_secret_access_key = YOUR_SECRET_KEY
 ```
+
 config:
+
 ```python
 [default]
-region=us-east-1
+region=us-west-1
 ```
 
 ## Run
+
 ```
 python3 src/run.py
 ```
